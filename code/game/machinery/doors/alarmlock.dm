@@ -6,7 +6,7 @@
 	glass = 1
 	autoclose = 0
 	var/datum/radio_frequency/air_connection
-	var/air_frequency = 1437
+	var/air_frequency = ATMOS_FIRE_FREQ
 
 /obj/machinery/door/airlock/alarmlock/New()
 	..()
@@ -18,7 +18,7 @@
 	air_connection = null
 	return ..()
 
-/obj/machinery/door/airlock/alarmlock/initialize()
+/obj/machinery/door/airlock/alarmlock/Initialize()
 	..()
 	radio_controller.remove_object(src, air_frequency)
 	air_connection = radio_controller.add_object(src, air_frequency, RADIO_TO_AIRALARM)

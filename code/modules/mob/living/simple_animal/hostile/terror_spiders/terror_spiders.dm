@@ -33,14 +33,25 @@ var/global/list/ts_spiderling_list = list()
 	melee_damage_upper = 20
 	attacktext = "bites"
 	attack_sound = 'sound/weapons/bite.ogg'
-	poison_type = "" // we do not use that silly system.
+	a_intent = INTENT_HARM
 
 	// Movement
+	pass_flags = PASSTABLE
+	turns_per_move = 5 // number of turns before AI-controlled spiders wander around. No effect on actual player or AI movement speed!
 	move_to_delay = 6
-	turns_per_move = 5
+	// AI spider speed at chasing down targets. Higher numbers mean slower speed. Divide 20 (server tick rate / second) by this to get tiles/sec.
+	// 5 = 4 tiles/sec, 6 = 3.3 tiles/sec. 3 = 6.6 tiles/sec.
+
+	// Player spider movement speed is controlled by the 'speed' var.
+	// Higher numbers mean slower speed. Can be negative for major speed increase. Call movement_delay() on mob to convert this var to into a step delay.
+	// '-1' (default for fast humans) converts to 1.5 or 6.6 tiles/sec
+	// '0' (default for human mobs) converts to 2.5, or 4 tiles/sec.
+	// '1' (default for most simple_mobs, including terror spiders) converts to 3.5, or 2.8 tiles/sec.
+	// '2' converts to 4.5, or 2.2 tiles/sec.
+
+	// Atmos
 	pressure_resistance = 50    //50 kPa difference required to push
 	throw_pressure_limit = 100  //100 kPa difference required to throw
-	pass_flags = PASSTABLE
 
 	// Ventcrawling
 	ventcrawler = 1 // allows player ventcrawling
@@ -131,11 +142,13 @@ var/global/list/ts_spiderling_list = list()
 	var/attackstep = 0
 	var/attackcycles = 0
 	var/spider_myqueen = null
+	var/spider_mymother = null
 	var/mylocation = null
 	var/chasecycles = 0
 	var/web_infects = 0
 
 	var/datum/action/innate/terrorspider/web/web_action
+	var/web_type = /obj/structure/spider/terrorweb
 	var/datum/action/innate/terrorspider/wrap/wrap_action
 
 	// Breathing - require some oxygen, and no toxins, but take little damage from this requirement not being met (they can hold their breath)
@@ -171,8 +184,8 @@ var/global/list/ts_spiderling_list = list()
 			visible_message("<span class='notice'>[src] harmlessly nuzzles [target].</span>")
 		T.CheckFaction()
 		CheckFaction()
-	else if(istype(target, /obj/structure/spider/cocoon))
-		to_chat(src, "Destroying our own cocoons would not help us.")
+	else if(istype(target, /obj/structure/spider)) // Prevents destroying coccoons (exploit), eggs (horrible misclick), etc
+		to_chat(src, "Destroying things created by fellow spiders would not help us.")
 	else if(istype(target, /obj/machinery/door/firedoor))
 		var/obj/machinery/door/firedoor/F = target
 		if(F.density)
@@ -196,16 +209,11 @@ var/global/list/ts_spiderling_list = list()
 			var/can_poison = 1
 			if(ishuman(G))
 				var/mob/living/carbon/human/H = G
-				if(!(H.species.reagent_tag & PROCESS_ORG) || (!H.species.tox_mod))
+				if(!(H.dna.species.reagent_tag & PROCESS_ORG) || (!H.dna.species.tox_mod))
 					can_poison = 0
 			spider_specialattack(G,can_poison)
 		else
 			G.attack_animal(src)
-	else if(istype(target, /obj/structure/alien/resin))
-		var/obj/structure/alien/resin/E = target
-		do_attack_animation(E)
-		E.health -= rand(melee_damage_lower, melee_damage_upper)
-		E.healthcheck()
 	else
 		target.attack_animal(src)
 
@@ -246,10 +254,11 @@ var/global/list/ts_spiderling_list = list()
 	add_language("Spider Hivemind")
 	if(spider_tier >= TS_TIER_2)
 		add_language("Galactic Common")
-	default_language = all_languages["Spider Hivemind"]
+	default_language = GLOB.all_languages["Spider Hivemind"]
 
-	web_action = new()
-	web_action.Grant(src)
+	if(web_type)
+		web_action = new()
+		web_action.Grant(src)
 	wrap_action = new()
 	wrap_action.Grant(src)
 
@@ -269,9 +278,9 @@ var/global/list/ts_spiderling_list = list()
 				spider_placed = 1
 	else
 		ts_count_alive_station++
-	// after 30 seconds, assuming nobody took control of it yet, offer it to ghosts.
-	addtimer(src, "CheckFaction", 150)
-	addtimer(src, "announcetoghosts", 300)
+	// after 3 seconds, assuming nobody took control of it yet, offer it to ghosts.
+	addtimer(CALLBACK(src, .proc/CheckFaction), 20)
+	addtimer(CALLBACK(src, .proc/announcetoghosts), 30)
 	var/datum/atom_hud/U = huds[DATA_HUD_MEDICAL_ADVANCED]
 	U.add_hud_to(src)
 
@@ -292,7 +301,7 @@ var/global/list/ts_spiderling_list = list()
 	handle_dying()
 	return ..()
 
-/mob/living/simple_animal/hostile/poison/terror_spider/Life()
+/mob/living/simple_animal/hostile/poison/terror_spider/Life(seconds, times_fired)
 	. = ..()
 	if(!.) // if mob is dead
 		if(prob(2))
@@ -326,10 +335,11 @@ var/global/list/ts_spiderling_list = list()
 			ts_count_alive_station--
 
 /mob/living/simple_animal/hostile/poison/terror_spider/death(gibbed)
-	if(!gibbed)
-		msg_terrorspiders("[src] has died in [get_area(src)].")
-	handle_dying()
-	..()
+	if(can_die())
+		if(!gibbed)
+			msg_terrorspiders("[src] has died in [get_area(src)].")
+		handle_dying()
+	return ..()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/spider_special_action()
 	return
@@ -353,9 +363,9 @@ var/global/list/ts_spiderling_list = list()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/CheckFaction()
 	if(faction.len != 1 || (!("terrorspiders" in faction)) || master_commander != null)
-		visible_message("<span class='danger'>[src] writhes in pain!</span>")
-		log_runtime(EXCEPTION("Terror spider created with incorrect faction list at: [atom_loc_line(src)]"))
-		death()
+		to_chat(src, "<span class='userdanger'>Your connection to the hive mind has been severed!</span>")
+		log_runtime(EXCEPTION("Terror spider with incorrect faction list at: [atom_loc_line(src)]"))
+		gib()
 
 /mob/living/simple_animal/hostile/poison/terror_spider/proc/try_open_airlock(obj/machinery/door/airlock/D)
 	if(D.operating)

@@ -1,7 +1,7 @@
 /obj/machinery/atmospherics/trinary
 	dir = SOUTH
 	initialize_directions = SOUTH|NORTH|WEST
-	use_power = 1
+	use_power = IDLE_POWER_USE
 
 	var/on = 0
 
@@ -66,7 +66,7 @@
 		nullifyPipenet(parent3)
 	return ..()
 
-/obj/machinery/atmospherics/trinary/initialize()
+/obj/machinery/atmospherics/trinary/atmos_init()
 	..()
 	//Mixer:
 	//1 and 2 is input

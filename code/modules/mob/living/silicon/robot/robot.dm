@@ -10,6 +10,7 @@ var/list/robot_verbs_default = list(
 	maxHealth = 100
 	health = 100
 	universal_understand = 1
+	deathgasp_on_death = TRUE
 
 	var/sight_mode = 0
 	var/custom_name = ""
@@ -51,7 +52,11 @@ var/list/robot_verbs_default = list(
 	var/opened = 0
 	var/custom_panel = null
 	var/list/custom_panel_names = list("Cricket")
+	var/list/custom_eye_names = list("Cricket","Standard")
 	var/emagged = 0
+	var/is_emaggable = TRUE
+	var/eye_protection = 0
+	var/ear_protection = 0
 
 	var/list/force_modules = list()
 	var/allow_rename = TRUE
@@ -128,8 +133,8 @@ var/list/robot_verbs_default = list(
 			camera.status = 0
 
 	if(mmi == null)
-		mmi = new /obj/item/mmi/posibrain(src)	//Give the borg an MMI if he spawns without for some reason. (probably not the correct way to spawn a posibrain, but it works)
-		mmi.icon_state="posibrain-occupied"
+		mmi = new /obj/item/mmi/robotic_brain(src)	//Give the borg an MMI if he spawns without for some reason. (probably not the correct way to spawn a robotic brain, but it works)
+		mmi.icon_state = "boris"
 
 	initialize_components()
 	//if(!unfinished)
@@ -207,7 +212,7 @@ var/list/robot_verbs_default = list(
 	if(prefix)
 		modtype = prefix
 	if(mmi)
-		if(istype(mmi, /obj/item/mmi/posibrain))
+		if(istype(mmi, /obj/item/mmi/robotic_brain))
 			braintype = "Android"
 		else
 			braintype = "Cyborg"
@@ -271,6 +276,7 @@ var/list/robot_verbs_default = list(
 	QDEL_NULL(camera)
 	QDEL_NULL(cell)
 	QDEL_NULL(robot_suit)
+	QDEL_NULL(spark_system)
 	return ..()
 
 /mob/living/silicon/robot/proc/pick_module()
@@ -287,7 +293,7 @@ var/list/robot_verbs_default = list(
 		if(N.kickoff)
 			modules = list("Nations")
 	if(mmi != null && mmi.alien)
-		modules = "Hunter"
+		modules = list("Hunter")
 	modtype = input("Please, select a module!", "Robot", null, null) as null|anything in modules
 	if(!modtype)
 		return
@@ -303,7 +309,7 @@ var/list/robot_verbs_default = list(
 			module.channels = list("Service" = 1)
 			module_sprites["Basic"] = "robot_old"
 			module_sprites["Android"] = "droid"
-			module_sprites["Default"] = "robot"
+			module_sprites["Default"] = "Standard"
 			module_sprites["Noble-STD"] = "Noble-STD"
 
 		if("Service")
@@ -314,7 +320,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Bro"] = "Brobot"
 			module_sprites["Rich"] = "maximillion"
 			module_sprites["Default"] = "Service2"
-			module_sprites["Standard"] = "robotServ"
+			module_sprites["Standard"] = "Standard-Serv"
 			module_sprites["Noble-SRV"] = "Noble-SRV"
 			module_sprites["Cricket"] = "Cricket-SERV"
 
@@ -326,7 +332,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Basic"] = "Miner_old"
 			module_sprites["Advanced Droid"] = "droid-miner"
 			module_sprites["Treadhead"] = "Miner"
-			module_sprites["Standard"] = "robotMine"
+			module_sprites["Standard"] = "Standard-Mine"
 			module_sprites["Noble-DIG"] = "Noble-DIG"
 			module_sprites["Cricket"] = "Cricket-MINE"
 
@@ -339,7 +345,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Surgeon"] = "surgeon"
 			module_sprites["Advanced Droid"] = "droid-medical"
 			module_sprites["Needles"] = "medicalrobot"
-			module_sprites["Standard"] = "robotMedi"
+			module_sprites["Standard"] = "Standard-Medi"
 			module_sprites["Noble-MED"] = "Noble-MED"
 			module_sprites["Cricket"] = "Cricket-MEDI"
 			status_flags &= ~CANPUSH
@@ -351,7 +357,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Red Knight"] = "Security"
 			module_sprites["Black Knight"] = "securityrobot"
 			module_sprites["Bloodhound"] = "bloodhound"
-			module_sprites["Standard"] = "robotSecy"
+			module_sprites["Standard"] = "Standard-Secy"
 			module_sprites["Noble-SEC"] = "Noble-SEC"
 			module_sprites["Cricket"] = "Cricket-SEC"
 			status_flags &= ~CANPUSH
@@ -364,7 +370,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Basic"] = "Engineering"
 			module_sprites["Antique"] = "engineerrobot"
 			module_sprites["Landmate"] = "landmate"
-			module_sprites["Standard"] = "robotEngi"
+			module_sprites["Standard"] = "Standard-Engi"
 			module_sprites["Noble-ENG"] = "Noble-ENG"
 			module_sprites["Cricket"] = "Cricket-ENGI"
 			magpulse = 1
@@ -375,7 +381,7 @@ var/list/robot_verbs_default = list(
 			module_sprites["Basic"] = "JanBot2"
 			module_sprites["Mopbot"]  = "janitorrobot"
 			module_sprites["Mop Gear Rex"] = "mopgearrex"
-			module_sprites["Standard"] = "robotJani"
+			module_sprites["Standard"] = "Standard-Jani"
 			module_sprites["Noble-CLN"] = "Noble-CLN"
 			module_sprites["Cricket"] = "Cricket-JANI"
 
@@ -391,7 +397,6 @@ var/list/robot_verbs_default = list(
 
 		if("Hunter")
 			module = new /obj/item/robot_module/alien/hunter(src)
-			icon = "icons/mob/alien.dmi"
 			icon_state = "xenoborg-state-a"
 			modtype = "Xeno-Hu"
 			feedback_inc("xeborg_hunter",1)
@@ -474,12 +479,8 @@ var/list/robot_verbs_default = list(
 		return
 
 	var/datum/robot_component/C = components[toggle]
-	if(C.toggled)
-		C.toggled = 0
-		to_chat(src, "<span class='warning'>You disable [C.name].</span>")
-	else
-		C.toggled = 1
-		to_chat(src, "<span class='warning'>You enable [C.name].</span>")
+	C.toggle()
+	to_chat(src, "<span class='warning'>You [C.toggled ? "enable" : "disable"] [C.name].</span>")
 
 /mob/living/silicon/robot/proc/sensor_mode()
 	set name = "Set Sensor Augmentation"
@@ -525,9 +526,8 @@ var/list/robot_verbs_default = list(
 		thruster_button.icon_state = "ionpulse[ionpulse_on]"
 
 /mob/living/silicon/robot/blob_act()
-	if(stat != 2)
+	if(stat != DEAD)
 		adjustBruteLoss(60)
-		updatehealth()
 		return 1
 	else
 		gib()
@@ -570,7 +570,6 @@ var/list/robot_verbs_default = list(
 
 /mob/living/silicon/robot/bullet_act(var/obj/item/projectile/Proj)
 	..(Proj)
-	updatehealth()
 	if(prob(75) && Proj.damage > 0) spark_system.start()
 	return 2
 
@@ -606,7 +605,6 @@ var/list/robot_verbs_default = list(
 		if(WT.remove_fuel(0))
 			playsound(src.loc, W.usesound, 50, 1)
 			adjustBruteLoss(-30)
-			updatehealth()
 			add_fingerprint(user)
 			user.visible_message("<span class='alert'>\The [user] patches some dents on \the [src] with \the [WT].</span>")
 		else
@@ -650,9 +648,12 @@ var/list/robot_verbs_default = list(
 					var/datum/robot_component/C = components[V]
 					if(C.installed == 1 || C.installed == -1)
 						removable_components += V
-
+				if(module)
+					removable_components += module.custom_removals
 				var/remove = input(user, "Which component do you want to pry out?", "Remove Component") as null|anything in removable_components
 				if(!remove)
+					return
+				if(module && module.handle_custom_removal(remove, user, W, params))
 					return
 				var/datum/robot_component/C = components[remove]
 				var/obj/item/robot_parts/robot_component/I = C.wrapped
@@ -735,7 +736,7 @@ var/list/robot_verbs_default = list(
 	else if(istype(W, /obj/item/borg/upgrade/))
 		var/obj/item/borg/upgrade/U = W
 		if(!opened)
-			to_chat(user, "<span class='warning'>You must access the borgs internals!</span>")
+			to_chat(user, "<span class='warning'>You must access the borg's internals!</span>")
 		else if(!src.module && U.require_module)
 			to_chat(user, "<span class='warning'>The borg must choose a module before it can be upgraded!</span>")
 		else if(U.locked)
@@ -749,6 +750,21 @@ var/list/robot_verbs_default = list(
 			else
 				to_chat(user, "<span class='danger'>Upgrade error.</span>")
 
+	else if(istype(W, /obj/item/mmi_radio_upgrade))
+		if(!opened)
+			to_chat(user, "<span class='warning'>You must access the borg's internals!</span>")
+			return
+		else if(!mmi)
+			to_chat(user, "<span class='warning'>This cyborg does not have an MMI to augment!</span>")
+			return
+		else if(mmi.radio)
+			to_chat(user, "<span class='warning'>A radio upgrade is already installed in the MMI!</span>")
+			return
+		else if(user.drop_item())
+			to_chat(user, "<span class='notice'>You apply the upgrade to [src].</span>")
+			to_chat(src, "<span class='notice'>MMI radio capability installed.</span>")
+			mmi.install_radio()
+			qdel(W)
 	else
 		return ..()
 
@@ -762,7 +778,9 @@ var/list/robot_verbs_default = list(
 		return
 	var/mob/living/M = user
 	if(!opened)//Cover is closed
-		if(locked)
+		if(!is_emaggable)
+			to_chat(user, "The emag sparks, and flashes red. This mechanism does not appear to be emaggable.")
+		else if(locked)
 			to_chat(user, "You emag the cover lock.")
 			locked = 0
 		else
@@ -789,7 +807,7 @@ var/list/robot_verbs_default = list(
 			laws = new /datum/ai_laws/syndicate_override
 			var/time = time2text(world.realtime,"hh:mm:ss")
 			lawchanges.Add("[time] <B>:</B> [M.name]([M.key]) emagged [name]([key])")
-			set_zeroth_law("Only [M.real_name] and people he designates as being such are Syndicate Agents.")
+			set_zeroth_law("Only [M.real_name] and people [M.p_they()] designate[M.p_s()] as being such are Syndicate Agents.")
 			to_chat(src, "<span class='warning'>ALERT: Foreign software detected.</span>")
 			sleep(5)
 			to_chat(src, "<span class='warning'>Initiating diagnostics...</span>")
@@ -805,7 +823,7 @@ var/list/robot_verbs_default = list(
 			to_chat(src, "<span class='warning'>ERRORERRORERROR</span>")
 			to_chat(src, "<b>Obey these laws:</b>")
 			laws.show_laws(src)
-			to_chat(src, "<span class='boldwarning'>ALERT: [M.real_name] is your new master. Obey your new laws and his commands.</span>")
+			to_chat(src, "<span class='boldwarning'>ALERT: [M.real_name] is your new master. Obey your new laws and [M.p_their()] commands.</span>")
 			SetLockdown(0)
 			if(src.module && istype(src.module, /obj/item/robot_module/miner))
 				for(var/obj/item/pickaxe/drill/cyborg/D in src.module.modules)
@@ -832,125 +850,9 @@ var/list/robot_verbs_default = list(
 				update_icons()
 				to_chat(usr, "You unlock your cover.")
 
-/mob/living/silicon/robot/attack_alien(mob/living/carbon/alien/humanoid/M as mob)
-	if(!ticker)
-		to_chat(M, "You cannot attack people before the game has started.")
-		return
-
-	if(istype(loc, /turf) && istype(loc.loc, /area/start))
-		to_chat(M, "No attacking people at spawn, you jackass.")
-		return
-
-	switch(M.a_intent)
-
-		if(INTENT_HELP)
-			for(var/mob/O in viewers(src, null))
-				if((O.client && !( O.blinded )))
-					O.show_message(text("<span class='notice'>[M] caresses [src]'s plating with its scythe like arm.</span>"), 1)
-
-		if(INTENT_GRAB)
-			grabbedby(M)
-
-		if(INTENT_HARM)
-			M.do_attack_animation(src)
-			var/damage = rand(10, 20)
-			if(prob(90))
-				playsound(loc, 'sound/weapons/slash.ogg', 25, 1, -1)
-				visible_message("<span class='danger'>[M] has slashed at [src]!</span>",\
-								"<span class='userdanger'>[M] has slashed at [src]!</span>")
-				if(prob(8))
-					flash_eyes(affect_silicon = 1)
-				adjustBruteLoss(damage)
-				updatehealth()
-			else
-				playsound(loc, 'sound/weapons/slashmiss.ogg', 25, 1, -1)
-				visible_message("<span class='danger'>[M] took a swipe at [src]!</span>", \
-								"<span class='userdanger'>[M] took a swipe at [src]!</span>")
-
-		if(INTENT_DISARM)
-			if(!(lying))
-				M.do_attack_animation(src)
-				if(prob(85))
-					Stun(7)
-					step(src,get_dir(M,src))
-					spawn(5)
-						step(src,get_dir(M,src))
-					playsound(loc, 'sound/weapons/pierce.ogg', 50, 1, -1)
-					visible_message("<span class='danger'>[M] has forced back [src]!</span>",\
-									"<span class='userdanger'>[M] has forced back [src]!</span>")
-				else
-					playsound(loc, 'sound/weapons/slashmiss.ogg', 25, 1, -1)
-					visible_message("<span class='danger'>[M] attempted to force back [src]!</span>",\
-									"<span class='userdanger'>[M] attempted to force back [src]!</span>")
-	return
-
-
-
-/mob/living/silicon/robot/attack_slime(mob/living/carbon/slime/M as mob)
-	if(..()) //successful slime shock
-		flash_eyes(affect_silicon = 1)
-		var/stunprob = M.powerlevel * 7 + 10
-		if(prob(stunprob) && M.powerlevel >= 8)
-			adjustBruteLoss(M.powerlevel * rand(6,10))
-
-	var/damage = rand(1, 3)
-
-	if(M.is_adult)
-		damage = rand(20, 40)
-	else
-		damage = rand(5, 35)
-	damage = round(damage / 2) // borgs recieve half damage
-	adjustBruteLoss(damage)
-	updatehealth()
-
-	return
-
-/mob/living/silicon/robot/attack_animal(mob/living/simple_animal/M as mob)
-	if(M.melee_damage_upper == 0)
-		M.custom_emote(1, "[M.friendly] [src]")
-	else
-		M.do_attack_animation(src)
-		if(M.attack_sound)
-			playsound(loc, M.attack_sound, 50, 1, 1)
-		visible_message("<span class='danger'><B>[M]</B> [M.attacktext] [src]!</span>")
-		add_attack_logs(M, src, "Animal attacked", FALSE)
-		var/damage = rand(M.melee_damage_lower, M.melee_damage_upper)
-		switch(M.melee_damage_type)
-			if(BRUTE)
-				adjustBruteLoss(damage)
-			if(BURN)
-				adjustFireLoss(damage)
-			if(TOX)
-				adjustToxLoss(damage)
-			if(OXY)
-				adjustOxyLoss(damage)
-			if(CLONE)
-				adjustCloneLoss(damage)
-			if(STAMINA)
-				adjustStaminaLoss(damage)
-		updatehealth()
-
 /mob/living/silicon/robot/attack_ghost(mob/user)
 	if(wiresexposed)
 		wires.Interact(user)
-
-/mob/living/silicon/robot/attack_hand(mob/user)
-	add_fingerprint(user)
-
-	if(opened && !wiresexposed && (!istype(user, /mob/living/silicon)))
-		if(cell)
-			cell.updateicon()
-			cell.add_fingerprint(user)
-			user.put_in_active_hand(cell)
-			to_chat(user, "You remove \the [cell].")
-			cell = null
-			update_icons()
-			diag_hud_set_borgcell()
-
-	if(!opened && (!istype(user, /mob/living/silicon)))
-		if(user.a_intent == INTENT_HELP)
-			user.visible_message("<span class='notice'>[user] pets [src]!</span>", \
-								"<span class='notice'>You pet [src]!</span>")
 
 /mob/living/silicon/robot/proc/allowed(obj/item/I)
 	var/obj/dummy = new /obj(null) // Create a dummy object to check access on as to avoid having to snowflake check_access on every mob
@@ -967,7 +869,10 @@ var/list/robot_verbs_default = list(
 
 	overlays.Cut()
 	if(stat != DEAD && !(paralysis || stunned || weakened || low_power_mode)) //Not dead, not stunned.
-		overlays += "eyes-[icon_state]"
+		if(custom_panel in custom_eye_names)
+			overlays += "eyes-[custom_panel]"
+		else
+			overlays += "eyes-[icon_state]"
 	else
 		overlays -= "eyes"
 
@@ -994,9 +899,10 @@ var/list/robot_verbs_default = list(
 			icon_state = "[base_icon]-roll"
 		else
 			icon_state = base_icon
-		for(var/obj/item/borg/combat/shield/S in module.modules)
-			if(activated(S))
-				overlays += "[base_icon]-shield"
+		if(module)
+			for(var/obj/item/borg/combat/shield/S in module.modules)
+				if(activated(S))
+					overlays += "[base_icon]-shield"
 	update_fire()
 
 /mob/living/silicon/robot/proc/installed_modules()
@@ -1348,7 +1254,9 @@ var/list/robot_verbs_default = list(
 
 /mob/living/silicon/robot/adjustOxyLoss(var/amount)
 	if(suiciding)
-		..()
+		return ..()
+	else
+		return STATUS_UPDATE_NONE
 
 /mob/living/silicon/robot/regenerate_icons()
 	..()
@@ -1357,16 +1265,19 @@ var/list/robot_verbs_default = list(
 /mob/living/silicon/robot/deathsquad
 	base_icon = "nano_bloodhound"
 	icon_state = "nano_bloodhound"
+	designation = "SpecOps"
 	lawupdate = 0
 	scrambledcodes = 1
-	pdahide = 1
-	modtype = "Commando"
-	faction = list("nanotrasen")
-	designation = "Nanotrasen Combat"
 	req_access = list(access_cent_specops)
 	ionpulse = 1
 	magpulse = 1
-	var/searching_for_ckey = 0
+	pdahide = 1
+	eye_protection = 2 // Immunity to flashes and the visual part of flashbangs
+	ear_protection = 1 // Immunity to the audio part of flashbangs
+	allow_rename = FALSE
+	modtype = "Commando"
+	faction = list("nanotrasen")
+	is_emaggable = FALSE
 
 /mob/living/silicon/robot/deathsquad/New(loc)
 	..()
@@ -1382,80 +1293,6 @@ var/list/robot_verbs_default = list(
 	radio.recalculateChannels()
 
 	playsound(loc, 'sound/mecha/nominalsyndi.ogg', 75, 0)
-
-/mob/living/silicon/robot/deathsquad/attack_hand(mob/user)
-	if(isnull(ckey) && !searching_for_ckey)
-		searching_for_ckey = 1
-		to_chat(user, "<span class='notice'>Now checking for possible borgs.</span>")
-		var/list/borg_candidates = pollCandidates("Do you want to play as a Nanotrasen Combat borg?")
-		if(borg_candidates.len > 0 && isnull(ckey))
-			searching_for_ckey = 0
-			var/mob/M = pick(borg_candidates)
-			M.mind.transfer_to(src)
-			M.mind.assigned_role = "MODE"
-			M.mind.special_role = SPECIAL_ROLE_DEATHSQUAD
-			ticker.mode.traitors |= M.mind // Adds them to current traitor list. Which is really the extra antagonist list.
-			key = M.key
-		else
-			searching_for_ckey = 0
-			to_chat(user, "<span class='notice'>Unable to connect to Central Command. Please wait and try again later.</span>")
-			return
-	else
-		to_chat(user, "<span class='warning'>[src] is already checking for possible borgs.</span>")
-		return
-
-/mob/living/silicon/robot/syndicate
-	base_icon = "syndie_bloodhound"
-	icon_state = "syndie_bloodhound"
-	lawupdate = 0
-	scrambledcodes = 1
-	pdahide = 1
-	faction = list("syndicate")
-	designation = "Syndicate Assault"
-	modtype = "Syndicate"
-	req_access = list(access_syndicate)
-	ionpulse = 1
-	magpulse = 1
-	lawchannel = "State"
-	var/playstyle_string = "<span class='userdanger'>You are a Syndicate assault cyborg!</span><br>\
-							<b>You are armed with powerful offensive tools to aid you in your mission: help the operatives secure the nuclear authentication disk. \
-							Your cyborg LMG will slowly produce ammunition from your power supply, and your operative pinpointer will find and locate fellow nuclear operatives. \
-							<i>Help the operatives secure the disk at all costs!</i></b>"
-
-/mob/living/silicon/robot/syndicate/New(loc)
-	..()
-	cell.maxcharge = 25000
-	cell.charge = 25000
-
-/mob/living/silicon/robot/syndicate/init()
-	laws = new /datum/ai_laws/syndicate_override
-	module = new /obj/item/robot_module/syndicate(src)
-
-	aiCamera = new/obj/item/camera/siliconcam/robot_camera(src)
-	radio = new /obj/item/radio/borg/syndicate(src)
-	radio.recalculateChannels()
-
-	spawn(5)
-		if(playstyle_string)
-			to_chat(src, playstyle_string)
-
-	playsound(loc, 'sound/mecha/nominalsyndi.ogg', 75, 0)
-
-/mob/living/silicon/robot/syndicate/medical
-	base_icon = "syndi-medi"
-	icon_state = "syndi-medi"
-	modtype = "Syndicate Medical"
-	designation = "Syndicate Medical"
-	playstyle_string = "<span class='userdanger'>You are a Syndicate medical cyborg!</span><br>\
-						<b>You are armed with powerful medical tools to aid you in your mission: help the operatives secure the nuclear authentication disk. \
-						Your hypospray will produce Restorative Nanites, a wonder-drug that will heal most types of bodily damages, including clone and brain damage. It also produces morphine for offense. \
-						Your defibrillator paddles can revive operatives through their hardsuits, or can be used on harm intent to shock enemies! \
-						Your energy saw functions as a circular saw, but can be activated to deal more damage, and your operative pinpointer will find and locate fellow nuclear operatives. \
-						<i>Help the operatives secure the disk at all costs!</i></b>"
-
-/mob/living/silicon/robot/syndicate/medical/init()
-	..()
-	module = new /obj/item/robot_module/syndicate_medical(src)
 
 /mob/living/silicon/robot/combat
 	base_icon = "droidcombat"
@@ -1508,7 +1345,7 @@ var/list/robot_verbs_default = list(
 	mind = new
 	mind.current = src
 	mind.original = src
-	mind.assigned_role = "MODE"
+	mind.assigned_role = SPECIAL_ROLE_ERT
 	mind.special_role = SPECIAL_ROLE_ERT
 	if(cyborg_unlock)
 		crisis = 1
@@ -1544,6 +1381,10 @@ var/list/robot_verbs_default = list(
 			disable_component("comms", 160)
 		if(2)
 			disable_component("comms", 60)
+
+/mob/living/silicon/robot/extinguish_light()
+	update_headlamp(1, 150)
+
 /mob/living/silicon/robot/rejuvenate()
 	..()
 	var/brute = 1000
@@ -1563,3 +1404,9 @@ var/list/robot_verbs_default = list(
 	var/static/all_borg_icon_states = icon_states('icons/mob/custom_synthetic/custom-synthetic.dmi')
 	if(spritename in all_borg_icon_states)
 		. = TRUE
+
+/mob/living/silicon/robot/check_eye_prot()
+	return eye_protection
+
+/mob/living/silicon/robot/check_ear_prot()
+	return ear_protection

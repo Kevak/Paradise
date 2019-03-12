@@ -1,4 +1,4 @@
-/obj/machinery/computer/arcade/
+/obj/machinery/computer/arcade
 	name = "random arcade"
 	desc = "random arcade machine"
 	icon = 'icons/obj/computer.dmi'
@@ -114,7 +114,7 @@
 			blocked = 1
 			var/attackamt = rand(2,6)
 			temp = "You attack for [attackamt] damage!"
-			playsound(src.loc, 'sound/arcade/Hit.ogg', 20, 1, extrarange = -6, falloff = 10)
+			playsound(src.loc, 'sound/arcade/hit.ogg', 20, 1, extrarange = -6, falloff = 10)
 			updateUsrDialog()
 			if(turtle > 0)
 				turtle--
@@ -128,7 +128,7 @@
 			var/pointamt = rand(1,3)
 			var/healamt = rand(6,8)
 			temp = "You use [pointamt] magic to heal for [healamt] damage!"
-			playsound(src.loc, 'sound/arcade/Heal.ogg', 20, 1, extrarange = -6, falloff = 10)
+			playsound(src.loc, 'sound/arcade/heal.ogg', 20, 1, extrarange = -6, falloff = 10)
 			updateUsrDialog()
 			turtle++
 
@@ -143,7 +143,7 @@
 			blocked = 1
 			var/chargeamt = rand(4,7)
 			temp = "You regain [chargeamt] points"
-			playsound(src.loc, 'sound/arcade/Mana.ogg', 20, 1, extrarange = -6, falloff = 10)
+			playsound(src.loc, 'sound/arcade/mana.ogg', 20, 1, extrarange = -6, falloff = 10)
 			player_mp += chargeamt
 			if(turtle > 0)
 				turtle--
@@ -178,7 +178,7 @@
 		if(!gameover)
 			gameover = 1
 			temp = "[enemy_name] has fallen! Rejoice!"
-			playsound(src.loc, 'sound/arcade/Win.ogg', 20, 1, extrarange = -6, falloff = 10)
+			playsound(src.loc, 'sound/arcade/win.ogg', 20, 1, extrarange = -6, falloff = 10)
 
 			if(emagged)
 				feedback_inc("arcade_win_emagged")
@@ -196,13 +196,13 @@
 	else if(emagged && (turtle >= 4))
 		var/boomamt = rand(5,10)
 		temp = "[enemy_name] throws a bomb, exploding you for [boomamt] damage!"
-		playsound(src.loc, 'sound/arcade/Boom.ogg', 20, 1, extrarange = -6, falloff = 10)
+		playsound(src.loc, 'sound/arcade/boom.ogg', 20, 1, extrarange = -6, falloff = 10)
 		player_hp -= boomamt
 
 	else if((enemy_mp <= 5) && (prob(70)))
 		var/stealamt = rand(2,3)
 		temp = "[enemy_name] steals [stealamt] of your power!"
-		playsound(src.loc, 'sound/arcade/Steal.ogg', 20, 1, extrarange = -6, falloff = 10)
+		playsound(src.loc, 'sound/arcade/steal.ogg', 20, 1, extrarange = -6, falloff = 10)
 		player_mp -= stealamt
 		updateUsrDialog()
 
@@ -210,7 +210,7 @@
 			gameover = 1
 			sleep(10)
 			temp = "You have been drained! GAME OVER"
-			playsound(src.loc, 'sound/arcade/Lose.ogg', 20, 1, extrarange = -6, falloff = 10)
+			playsound(src.loc, 'sound/arcade/lose.ogg', 20, 1, extrarange = -6, falloff = 10)
 			if(emagged)
 				feedback_inc("arcade_loss_mana_emagged")
 				usr.gib()
@@ -219,20 +219,20 @@
 
 	else if((enemy_hp <= 10) && (enemy_mp > 4))
 		temp = "[enemy_name] heals for 4 health!"
-		playsound(src.loc, 'sound/arcade/Heal.ogg', 20, 1, extrarange = -6, falloff = 10)
+		playsound(src.loc, 'sound/arcade/heal.ogg', 20, 1, extrarange = -6, falloff = 10)
 		enemy_hp += 4
 		enemy_mp -= 4
 
 	else
 		var/attackamt = rand(3,6)
 		temp = "[enemy_name] attacks for [attackamt] damage!"
-		playsound(src.loc, 'sound/arcade/Hit.ogg', 20, 1, extrarange = -6, falloff = 10)
+		playsound(src.loc, 'sound/arcade/hit.ogg', 20, 1, extrarange = -6, falloff = 10)
 		player_hp -= attackamt
 
 	if((player_mp <= 0) || (player_hp <= 0))
 		gameover = 1
 		temp = "You have been crushed! GAME OVER"
-		playsound(src.loc, 'sound/arcade/Lose.ogg', 20, 1, extrarange = -6, falloff = 10)
+		playsound(src.loc, 'sound/arcade/lose.ogg', 20, 1, extrarange = -6, falloff = 10)
 		if(emagged)
 			feedback_inc("arcade_loss_hp_emagged")
 			usr.gib()
@@ -476,7 +476,7 @@
 						M.Weaken(3)
 						atom_say("A sudden gust of powerful wind slams [M] into the floor!")
 						M.take_organ_damage(25)
-						playsound(src.loc, 'sound/weapons/Genhit.ogg', 100, 1)
+						playsound(src.loc, 'sound/weapons/genhit.ogg', 100, 1)
 					else
 						to_chat(M, "<span class='userdanger'>A violent gale blows past you, and you barely manage to stay standing!</span>")
 				if(ORION_TRAIL_COLLISION) //by far the most damaging event
@@ -489,7 +489,7 @@
 						if(hull)
 							sleep(10)
 							atom_say("A new floor suddenly appears around [src]. What the hell?")
-							playsound(src.loc, 'sound/weapons/Genhit.ogg', 100, 1)
+							playsound(src.loc, 'sound/weapons/genhit.ogg', 100, 1)
 							var/turf/space/T
 							for(T in orange(1, src))
 								T.ChangeTurf(/turf/simulated/floor/plating/)
@@ -497,7 +497,7 @@
 						atom_say("Something slams into the floor around [src] - luckily, it didn't get through!")
 						playsound(src.loc, 'sound/effects/bang.ogg', 20, 1)
 				if(ORION_TRAIL_MALFUNCTION)
-					playsound(src.loc, 'sound/effects/EMPulse.ogg', 20, 1)
+					playsound(src.loc, 'sound/effects/empulse.ogg', 20, 1)
 					visible_message("<span class='danger'>[src] malfunctions, randomizing in-game stats!</span>")
 					var/oldfood = food
 					var/oldfuel = fuel
@@ -573,7 +573,7 @@
 
 	else if(href_list["killcrew"]) //shoot a crewmember
 		var/sheriff = remove_crewmember() //I shot the sheriff
-		playsound(loc,'sound/weapons/Gunshot.ogg', 100, 1)
+		playsound(loc,'sound/weapons/gunshots/gunshot.ogg', 100, 1)
 
 		if(settlers.len == 0 || alive == 0)
 			atom_say("The last crewmember [sheriff], shot themselves, GAME OVER!")
@@ -814,7 +814,7 @@
 
 		if(ORION_TRAIL_SPACEPORT)
 			if(spaceport_raided)
-				eventdat += "The Spaceport is on high alert! they wont let you dock since you tried to attack them!"
+				eventdat += "The Spaceport is on high alert! They wont let you dock since you tried to attack them!"
 				if(last_spaceport_action)
 					eventdat += "<br>Last Spaceport Action: [last_spaceport_action]"
 				eventdat += "<P ALIGN=Right><a href='byond://?src=[UID()];leave_spaceport=1'>Depart Spaceport</a></P>"
@@ -912,9 +912,9 @@
 		newcrew = specific
 	else
 		if(prob(50))
-			newcrew = pick(first_names_male)
+			newcrew = pick(GLOB.first_names_male)
 		else
-			newcrew = pick(first_names_female)
+			newcrew = pick(GLOB.first_names_female)
 	if(newcrew)
 		settlers += newcrew
 		alive++
@@ -965,26 +965,11 @@
 		emagged = 1
 
 /mob/living/simple_animal/hostile/syndicate/ranged/orion
-	name = "Spaceport Security"
-	desc = "The Premier security forces for all spaceports found along the Orion Trail."
+	name = "spaceport security"
+	desc = "Premier corporate security forces for all spaceports found along the Orion Trail."
 	faction = list("orion")
-	loot = list(/obj/effect/landmark/mobcorpse/orionsecurity,
-				/obj/item/gun/projectile/automatic/c20r,
-				/obj/item/shield/energy)
-
-/obj/effect/landmark/mobcorpse/orionsecurity
-	name = "Spaceport Security"
-	corpseuniform = /obj/item/clothing/under/syndicate
-	corpsesuit = /obj/item/clothing/suit/armor/vest
-	corpseshoes = /obj/item/clothing/shoes/combat
-	corpsegloves = /obj/item/clothing/gloves/combat
-	corpseradio = /obj/item/radio/headset
-	corpsemask = /obj/item/clothing/mask/gas
-	corpsehelmet = /obj/item/clothing/head/helmet/swat
-	corpseback = /obj/item/storage/backpack
-	corpseid = 1
-	corpseidjob = "Officer"
-	corpseidaccess = "Syndicate"
+	loot = list()
+	del_on_death = TRUE
 
 /obj/item/orion_ship
 	name = "model settler ship"
@@ -1013,7 +998,7 @@
 	to_chat(user, "<span class='warning'>You flip the switch on the underside of [src].</span>")
 	active = 1
 	visible_message("<span class='notice'>[src] softly beeps and whirs to life!</span>")
-	playsound(src.loc, 'sound/machines/defib_SaftyOn.ogg', 25, 1)
+	playsound(src.loc, 'sound/machines/defib_saftyon.ogg', 25, 1)
 	atom_say("This is ship ID #[rand(1,1000)] to Orion Port Authority. We're coming in for landing, over.")
 	sleep(20)
 	visible_message("<span class='warning'>[src] begins to vibrate...</span>")

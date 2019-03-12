@@ -63,6 +63,7 @@
 	var/new_destination		// pending new destination (waiting for beacon response)
 	var/destination			// destination description tag
 	var/next_destination	// the next destination in the patrol route
+	var/robot_arm = /obj/item/robot_parts/r_arm
 
 	var/blockcount = 0		//number of times retried a blocked path
 	var/awaiting_beacon	= 0	// count of pticks awaiting a beacon response
@@ -137,7 +138,7 @@
 
 /mob/living/simple_animal/bot/New()
 	..()
-	bots_list += src
+	GLOB.bots_list += src
 	icon_living = icon_state
 	icon_dead = icon_state
 	access_card = new /obj/item/card/id(src)
@@ -151,7 +152,7 @@
 	add_language("Tradeband", 1)
 	add_language("Gutter", 1)
 	add_language("Trinary", 1)
-	default_language = all_languages["Galactic Common"]
+	default_language = GLOB.all_languages["Galactic Common"]
 
 	bot_core = new bot_core_type(src)
 	spawn(30)
@@ -190,17 +191,23 @@
 	if(path_hud)
 		QDEL_NULL(path_hud)
 		path_hud = null
- 	bots_list -= src
+ 	GLOB.bots_list -= src
 	QDEL_NULL(Radio)
 	QDEL_NULL(access_card)
+	if(reset_access_timer_id)
+		deltimer(reset_access_timer_id)
+		reset_access_timer_id = null
 	if(radio_controller && bot_filter)
 		radio_controller.remove_object(bot_core, control_freq)
 	QDEL_NULL(bot_core)
 	return ..()
 
 /mob/living/simple_animal/bot/death(gibbed)
+	// Only execute the below if we successfully died
+	. = ..()
+	if(!.)
+		return FALSE
 	explode()
-	..()
 
 /mob/living/simple_animal/bot/proc/explode()
 	qdel(src)
@@ -239,8 +246,8 @@
 		new /obj/effect/decal/cleanable/blood/oil(loc)
 	return ..(amount)
 
-/mob/living/simple_animal/bot/updatehealth()
-	..()
+/mob/living/simple_animal/bot/updatehealth(reason = "none given")
+	..(reason)
 	diag_hud_set_bothealth()
 
 /mob/living/simple_animal/bot/handle_automated_action()
@@ -258,22 +265,22 @@
 			return
 	return 1 //Successful completion. Used to prevent child process() continuing if this one is ended early.
 
-/mob/living/simple_animal/bot/attack_alien(var/mob/living/carbon/alien/user as mob)
+/mob/living/simple_animal/bot/attack_alien(mob/living/carbon/alien/user)
 	user.changeNext_move(CLICK_CD_MELEE)
 	user.do_attack_animation(src)
 	apply_damage(rand(15,30), BRUTE)
-	visible_message("<span class='userdanger'>[user] has slashed [src]!</span>")
+	visible_message("<span class='danger'>[user] has slashed [src]!</span>")
 	playsound(loc, 'sound/weapons/slice.ogg', 25, 1, -1)
 	if(prob(10))
 		new /obj/effect/decal/cleanable/blood/oil(loc)
 
-/mob/living/simple_animal/bot/attack_animal(var/mob/living/simple_animal/M as mob)
+/mob/living/simple_animal/bot/attack_animal(mob/living/simple_animal/M)
 	M.do_attack_animation(src)
 	if(M.melee_damage_upper == 0)
 		return
 	apply_damage(M.melee_damage_upper, BRUTE)
-	visible_message("<span class='userdanger'>[M] has [M.attacktext] [src]!</span>")
-	add_attack_logs(M, src, "Animal attacked", FALSE)
+	visible_message("<span class='danger'>[M] has [M.attacktext] [src]!</span>")
+	add_attack_logs(M, src, "Animal attacked", ATKLOG_ALL)
 	if(prob(10))
 		new /obj/effect/decal/cleanable/blood/oil(loc)
 
@@ -367,17 +374,13 @@
 				to_chat(user, "<span class='warning'>The welder must be on for this task!</span>")
 		else
 			if(W.force) //if force is non-zero
-				var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-				s.set_up(5, 1, src)
-				s.start()
+				do_sparks(5, 1, src)
 			..()
 
 /mob/living/simple_animal/bot/bullet_act(obj/item/projectile/Proj)
 	if(Proj && (Proj.damage_type == BRUTE || Proj.damage_type == BURN))
 		if(prob(75) && Proj.damage > 0)
-			var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-			s.set_up(5, 1, src)
-			s.start()
+			do_sparks(5, 1, src)
 	return ..()
 
 /mob/living/simple_animal/bot/emp_act(severity)
@@ -527,7 +530,7 @@ Pass a positive integer as an argument to override a bot's default speed.
 			turn_on() //Saves the AI the hassle of having to activate a bot manually.
 		access_card = all_access //Give the bot all-access while under the AI's command.
 		if(client)
-			reset_access_timer_id = addtimer(src, "bot_reset", 600) //if the bot is player controlled, they get the extra access for a limited time
+			reset_access_timer_id = addtimer(CALLBACK (src, .proc/bot_reset), 600, TIMER_OVERRIDE|TIMER_STOPPABLE) //if the bot is player controlled, they get the extra access for a limited time
 			to_chat(src, "<span class='notice'><span class='big'>Priority waypoint set by [calling_ai] <b>[caller]</b>. Proceed to <b>[end_area.name]</b>.</span><br>[path.len-1] meters to destination. You have been granted additional door access for 60 seconds.</span>")
 		if(message)
 			to_chat(calling_ai, "<span class='notice'>[bicon(src)] [name] called to [end_area.name]. [path.len-1] meters to destination.</span>")
@@ -653,7 +656,7 @@ Pass a positive integer as an argument to override a bot's default speed.
 
 /mob/living/simple_animal/bot/proc/get_next_patrol_target()
 	// search the beacon list for the next target in the list.
-	for(var/obj/machinery/navbeacon/NB in navbeacons["[z]"])
+	for(var/obj/machinery/navbeacon/NB in GLOB.navbeacons["[z]"])
 		if(NB.location == next_destination) //Does the Beacon location text match the destination?
 			destination = new_destination //We now know the name of where we want to go.
 			patrol_target = NB.loc //Get its location and set it as the target.
@@ -661,7 +664,7 @@ Pass a positive integer as an argument to override a bot's default speed.
 			return 1
 
 /mob/living/simple_animal/bot/proc/find_nearest_beacon()
-	for(var/obj/machinery/navbeacon/NB in navbeacons["[z]"])
+	for(var/obj/machinery/navbeacon/NB in GLOB.navbeacons["[z]"])
 		var/dist = get_dist(src, NB)
 		if(nearest_beacon) //Loop though the beacon net to find the true closest beacon.
 			//Ignore the beacon if were are located on it.
@@ -886,7 +889,7 @@ Pass a positive integer as an argument to override a bot's default speed.
 
 // Machinery to simplify topic and access calls
 /obj/machinery/bot_core
-	use_power = 0
+	use_power = NO_POWER_USE
 	var/mob/living/simple_animal/bot/owner = null
 
 /obj/machinery/bot_core/New(loc)
@@ -1104,3 +1107,6 @@ Pass a positive integer as an argument to override a bot's default speed.
 	if(I)
 		I.icon = null
 	path.Cut(1, 2)
+
+/mob/living/simple_animal/bot/proc/drop_part(obj/item/drop_item, dropzone)
+	new drop_item(dropzone)

@@ -295,7 +295,7 @@
 		return 0
 	if(prob(hit_reaction_chance))
 		var/mob/living/carbon/human/H = owner
-		owner.visible_message("<span class='danger'>The reactive teleport system flings [H] clear of [attack_text], shutting itself off in the process!</span>")
+		owner.visible_message("<span class='danger'>The reactive teleport system flings [H] clear of [attack_text]!</span>")
 		var/list/turfs = new/list()
 		for(var/turf/T in orange(tele_range, H))
 			if(istype(T, /turf/space))
@@ -441,6 +441,13 @@
 	desc = "A set of armor worn by security members of the Nanotrasen Emergency Response Team. Has red highlights."
 	icon_state = "ertarmor_sec"
 
+
+/obj/item/clothing/suit/armor/vest/ert/security/paranormal
+	name = "emergency response team paranormal armor"
+	desc = "A set of armor worn by paranormal members of the Nanotrasen Emergency Response Team. Has crusader sigils."
+	icon_state = "knight_templar"
+	item_state = "knight_templar"
+
 //Engineer
 /obj/item/clothing/suit/armor/vest/ert/engineer
 	name = "emergency response team engineer armor"
@@ -458,3 +465,15 @@
 	name = "emergency response team janitor armor"
 	desc = "A set of armor worn by janitorial members of the Nanotrasen Emergency Response Team. Has red and white highlights."
 	icon_state = "ertarmor_jan"
+
+//same defense as basic sec armor
+/obj/item/clothing/suit/storage/lawyer/blackjacket/armored
+	desc = "A snappy dress jacket, reinforced with a layer of armor protecting the torso."
+	allowed = list(/obj/item/tank/emergency_oxygen, /obj/item/gun/projectile/revolver, /obj/item/gun/projectile/automatic/pistol)
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO
+	cold_protection = UPPER_TORSO|LOWER_TORSO
+	min_cold_protection_temperature = ARMOR_MIN_TEMP_PROTECT
+	heat_protection = UPPER_TORSO|LOWER_TORSO
+	max_heat_protection_temperature = ARMOR_MAX_TEMP_PROTECT
+	burn_state = FIRE_PROOF
+	armor = list(melee = 25, bullet = 15, laser = 25, energy = 10, bomb = 25, bio = 0, rad = 0)

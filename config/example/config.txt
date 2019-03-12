@@ -37,6 +37,9 @@ LOG_SAY
 ## log admin actions
 LOG_ADMIN
 
+## log admin chat
+LOG_ADMINCHAT
+
 ## log client access (logon/logoff)
 LOG_ACCESS
 
@@ -91,6 +94,14 @@ PROBABILITY NATIONS 0
 PROBABILITY EXTENDED 2
 PROBABILITY NUCLEAR 3
 PROBABILITY ABDUCTION 0
+PROBABILITY DEVIL 0
+PROBABILITY DEVILAGENTS 0
+
+## Probability in % for Free Golems to spawn at roundstart, set to 0 for no golems
+PROB_FREE_GOLEMS 75
+
+## Uncomment to allow free golems on all roundtypes. Otherwise, disabled on cult, wiz, raging mages, blob, and nuclear.
+#UNRESTRICTED_FREE_GOLEMS
 
 ## Maximum cycles shadowlings can remain unhatched before they take damage. 1800 = 60 minutes, 900 = 30 minutes, 0 = feature disabled.
 SHADOWLING_MAX_AGE 0
@@ -109,6 +120,9 @@ ALLOW_ADMIN_OOCCOLOR
 
 ## If metadata is supported
 ALLOW_METADATA
+
+## The time it takes for a round to start in seconds
+PREGAME_TIMESTART 240
 
 ## allow players to initiate a restart vote
 #ALLOW_VOTE_RESTART
@@ -179,6 +193,9 @@ CHECK_RANDOMIZER
 
 ## GitHub address
 # GITHUBURL http://example.org
+
+## Discord address
+# DISCORDURL http://example.org
 
 ## Donations address
 # DONATIONSURL http://example.org
@@ -301,7 +318,13 @@ PLAYER_REROUTE_CAP 0
 #DISABLE_AWAY_MISSIONS
 
 ## Disable the loading of space ruins
-DISABLE_SPACE_RUINS
+#DISABLE_SPACE_RUINS
+
+## Minimum number of space ruins levels to generate
+EXTRA_SPACE_RUINS_LEVELS_MIN 2
+
+## Maximum number of space ruins levels to generate
+EXTRA_SPACE_RUINS_LEVELS_MAX 4
 
 ## Uncomment to disable the OOC/LOOC channel by default.
 #DISABLE_OOC
@@ -368,3 +391,9 @@ HIGH_POP_MC_MODE_AMOUNT 65
 
 ##Disengage high pop mode if player count drops below this
 DISABLE_HIGH_POP_MC_MODE_AMOUNT 60
+
+##Uncomment to enable developer start. Auto starts the server after initialization
+##DEVELOPER_EXPRESS_START
+
+## Uncomment to disable automatic admin for localhost
+#DISABLE_LOCALHOST_ADMIN

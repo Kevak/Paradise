@@ -4,17 +4,17 @@
 	icon = 'icons/obj/meter.dmi'
 	icon_state = "meterX"
 	var/obj/machinery/atmospherics/pipe/target = null
-	anchored = 1
+	anchored = TRUE
 	armor = list(melee = 0, bullet = 0, laser = 0, energy = 100, bomb = 0, bio = 100, rad = 100)
 	power_channel = ENVIRON
-	var/frequency = 0
+	var/frequency = ATMOS_DISTRO_FREQ
 	var/id
 	var/id_tag
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 2
 	active_power_usage = 5
 	req_one_access_txt = "24;10"
-	Mtoollink = 1
+	Mtoollink = TRUE
 	settagwhitelist = list("id_tag")
 
 /obj/machinery/meter/New()
@@ -30,7 +30,7 @@
 	target = null
 	return ..()
 
-/obj/machinery/meter/initialize()
+/obj/machinery/meter/Initialize()
 	..()
 	if(!target)
 		target = locate(/obj/machinery/atmospherics/pipe) in loc
@@ -144,7 +144,7 @@
 	return 1
 
 
-/obj/machinery/meter/turf/initialize()
+/obj/machinery/meter/turf/Initialize()
 	if(!target)
 		target = loc
 	..()

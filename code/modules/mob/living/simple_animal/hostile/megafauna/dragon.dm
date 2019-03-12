@@ -45,7 +45,7 @@ Difficulty: Medium
 	ranged = 1
 	pixel_x = -16
 	loot = list(/obj/structure/closet/crate/necropolis/dragon)
-	butcher_results = list(/obj/item/ore/diamond = 5, /obj/item/stack/sheet/sinew = 5, /obj/item/stack/sheet/animalhide/ashdrake = 10, /obj/item/stack/sheet/bone = 30)
+	butcher_results = list(/obj/item/stack/ore/diamond = 5, /obj/item/stack/sheet/sinew = 5, /obj/item/stack/sheet/animalhide/ashdrake = 10, /obj/item/stack/sheet/bone = 30)
 	var/swooping = 0
 	var/swoop_cooldown = 0
 	medal_type = MEDAL_PREFIX
@@ -101,7 +101,7 @@ Difficulty: Medium
 	animate(src, pixel_z = 0, time = 12)
 
 /obj/effect/temp_visual/target
-	icon = 'icons/mob/actions.dmi'
+	icon = 'icons/mob/actions/actions.dmi'
 	icon_state = "sniper_zoom"
 	layer = MOB_LAYER - 0.1
 	luminosity = 2
@@ -128,7 +128,7 @@ Difficulty: Medium
 
 /obj/effect/temp_visual/target/proc/fall()
 	var/turf/T = get_turf(src)
-	playsound(T,'sound/magic/Fireball.ogg', 200, 1)
+	playsound(T,'sound/magic/fireball.ogg', 200, 1)
 	new /obj/effect/temp_visual/fireball(T)
 	sleep(12)
 	explosion(T, 0, 0, 1, 0, 0, 0, 1)
@@ -164,7 +164,7 @@ Difficulty: Medium
 			new /obj/effect/temp_visual/target(turf)
 
 /mob/living/simple_animal/hostile/megafauna/dragon/proc/fire_walls()
-	playsound(get_turf(src),'sound/magic/Fireball.ogg', 200, 1)
+	playsound(get_turf(src),'sound/magic/fireball.ogg', 200, 1)
 
 	for(var/d in cardinal)
 		spawn(0)
@@ -229,7 +229,7 @@ Difficulty: Medium
 	playsound(src.loc, 'sound/effects/meteorimpact.ogg', 200, 1)
 	for(var/mob/living/L in orange(1, src))
 		if(L.stat)
-			visible_message("<span class='warning'>[src] slams down on [L], crushing them!</span>")
+			visible_message("<span class='warning'>[src] slams down on [L], crushing [L.p_them()]!</span>")
 			L.gib()
 		else
 			L.adjustBruteLoss(75)

@@ -4,7 +4,7 @@
 	name = "Embedded Controller"
 	anchored = 1
 
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 10
 
 	var/on = 1
@@ -54,7 +54,7 @@
 	var/datum/radio_frequency/radio_connection
 	unacidable = 1
 
-/obj/machinery/embedded_controller/radio/initialize()
+/obj/machinery/embedded_controller/radio/Initialize()
 	..()
 	set_frequency(frequency)
 

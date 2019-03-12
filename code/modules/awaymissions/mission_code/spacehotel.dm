@@ -54,7 +54,7 @@
 	name = "space hotel pamphlet"
 	info = "<h3>Welcome to Deep Space Hotel 419!</h3>Thank you for choosing our hotel. Simply hand your credit or debit card to the concierge and get your room key! To check out, hand your credit card back.<small><h4>Conditions:</h4><ul><li>The hotel is not responsible for any losses due to time or space anomalies.<li>The hotel is not responsible for events that occur outside of the hotel station, including, but not limited to, events that occur inside of dimensional pockets.<li>The hotel is not responsible for overcharging your account.<li>The hotel is not responsible for missing persons.<li>The hotel is not responsible for mind-altering effects due to drugs, magic, demons, or space worms.</ul></small>"
 
-/obj/effect/landmark/map_loader/hotel_room/initialize()
+/obj/effect/landmark/map_loader/hotel_room/Initialize()
 	..()
 	// load and randomly assign rooms
 	var/global/list/south_room_templates = list()
@@ -89,12 +89,12 @@
 // The door to a hotel room, but also metadata for the room itself
 /obj/machinery/door/unpowered/hotel_door
 	name = "Room Door"
-	icon = 'icons/obj/doors/Doorsand.dmi'
+	icon = 'icons/obj/doors/doorsand.dmi'
 	icon_state = "door_closed"
 	autoclose = 1
 	var/doorOpen = 'sound/machines/airlock_open.ogg'
 	var/doorClose = 'sound/machines/airlock_close.ogg'
-	var/doorDeni = 'sound/machines/DeniedBeep.ogg'
+	var/doorDeni = 'sound/machines/deniedbeep.ogg'
 	var/id									// the room number, eg 101
 	var/obj/item/card/hotel_card/card// room's key card
 	var/mob/living/occupant = null			// the current room occupant
@@ -234,11 +234,11 @@
 	D.account = get_card_account(id, occupant)
 	if(!D.account)
 		return null
-	if(!D.account.charge(100, transaction_purpose = "10 minutes", dest_name = name))
+	if(!D.account.charge(100, null, "10 minutes hotel stay", "Biesel GalaxyNet Terminal [rand(111,1111)]", "[name]"))
 		return null
 
 	D.occupant = occupant
-	D.roomtimer = addtimer(src, "process_room", PAY_INTERVAL, 0, roomid)
+	D.roomtimer = addtimer(CALLBACK(src, .proc/process_room, roomid), PAY_INTERVAL, TIMER_STOPPABLE)
 	vacant_rooms -= D
 	guests[occupant] = roomid
 
@@ -251,8 +251,8 @@
 	if(!D || !D.occupant)
 		return
 
-	if(D.account.charge(100, transaction_purpose = "10 minutes", dest_name = name))
-		D.roomtimer = addtimer(src, "process_room", PAY_INTERVAL, 0, roomid)
+	if(D.account.charge(100, null, "10 minutes hotel stay extension", "Biesel GalaxyNet Terminal [rand(111,1111)]", "[name]"))
+		D.roomtimer = addtimer(CALLBACK(src, .proc/process_room, roomid), PAY_INTERVAL, TIMER_STOPPABLE)
 	else
 		force_checkout(roomid)
 
@@ -300,5 +300,3 @@
 
 	S.retal_target = target
 	S.retal = 1
-
-#undef CHECKOUT_TIME

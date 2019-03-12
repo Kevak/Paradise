@@ -1,6 +1,6 @@
 #define DAMAGE			1
 #define FIRE			2
-#define LIGHT			1
+#define POD_LIGHT		1
 #define WINDOW			2
 #define RIM	    		3
 #define PAINT			4
@@ -78,7 +78,7 @@
 	var/part = input(user, "Choose part", null) as null|anything in list("Lights","Rim","Paint","Windows")
 	switch(part)
 		if("Lights")
-			part_type = LIGHT
+			part_type = POD_LIGHT
 		if("Rim")
 			part_type = RIM
 		if("Paint")
@@ -101,7 +101,7 @@
 		pod_overlays[FIRE] = image(icon, icon_state="pod_fire")
 	if(!pod_paint_effect)
 		pod_paint_effect = new/list(4)
-		pod_paint_effect[LIGHT] = image(icon,icon_state = "LIGHTS")
+		pod_paint_effect[POD_LIGHT] = image(icon,icon_state = "LIGHTS")
 		pod_paint_effect[WINDOW] = image(icon,icon_state = "Windows")
 		pod_paint_effect[RIM] = image(icon,icon_state = "RIM")
 		pod_paint_effect[PAINT] = image(icon,icon_state = "PAINT")
@@ -119,7 +119,7 @@
 	pr_give_air = new /datum/global_iterator/pod_tank_give_air(list(src))
 	equipment_system = new(src)
 	equipment_system.installed_modules += battery
-	spacepods_list += src
+	GLOB.spacepods_list += src
 	cargo_hold = new/obj/item/storage/internal(src)
 	cargo_hold.w_class = 5	//so you can put bags in
 	cargo_hold.storage_slots = 0	//You need to install cargo modules to use it.
@@ -145,7 +145,7 @@
 		for(var/mob/M in passengers)
 			M.forceMove(get_turf(src))
 			passengers -= M
-	spacepods_list -= src
+	GLOB.spacepods_list -= src
 	return ..()
 
 /obj/spacepod/process()
@@ -162,7 +162,7 @@
 
 	if(!pod_paint_effect)
 		pod_paint_effect = new/list(4)
-		pod_paint_effect[LIGHT] = image(icon,icon_state = "LIGHTS")
+		pod_paint_effect[POD_LIGHT] = image(icon,icon_state = "LIGHTS")
 		pod_paint_effect[WINDOW] = image(icon,icon_state = "Windows")
 		pod_paint_effect[RIM] = image(icon,icon_state = "RIM")
 		pod_paint_effect[PAINT] = image(icon,icon_state = "PAINT")
@@ -170,9 +170,9 @@
 
 	if(has_paint)
 		var/image/to_add
-		if(!isnull(pod_paint_effect[LIGHT]))
-			to_add = pod_paint_effect[LIGHT]
-			to_add.color = colors[LIGHT]
+		if(!isnull(pod_paint_effect[POD_LIGHT]))
+			to_add = pod_paint_effect[POD_LIGHT]
+			to_add.color = colors[POD_LIGHT]
 			overlays += to_add
 		if(!isnull(pod_paint_effect[WINDOW]))
 			to_add = pod_paint_effect[WINDOW]
@@ -199,13 +199,16 @@
 		deal_damage(P.damage)
 	P.on_hit(src)
 
+/obj/spacepod/AllowDrop()
+	return TRUE
+
 /obj/spacepod/blob_act()
 	deal_damage(30)
 	return
 
-/obj/spacepod/attack_animal(mob/living/simple_animal/user as mob)
-	if(user.melee_damage_upper == 0)
-		user.custom_emote(1, "[user.friendly] [src]")
+/obj/spacepod/attack_animal(mob/living/simple_animal/user)
+	if((user.a_intent == INTENT_HELP && user.ckey) || user.melee_damage_upper == 0)
+		user.custom_emote(1, "[user.friendly] [src].")
 	else
 		var/damage = rand(user.melee_damage_lower, user.melee_damage_upper)
 		deal_damage(damage)
@@ -233,12 +236,19 @@
 	if(!health)
 		spawn(0)
 			message_to_riders("<span class='userdanger'>Critical damage to the vessel detected, core explosion imminent!</span>")
-			for(var/i = 10, i >= 0; --i)
-				message_to_riders("<span class='warning'>[i]</span>")
-				if(i == 0)
-					explosion(loc, 2, 4, 8)
-					qdel(src)
+			for(var/i in 1 to 3)
+				var/count = 3
+				message_to_riders("<span class='warning'>[count]</span>")
+				count--
 				sleep(10)
+			if(LAZYLEN(pilot) || LAZYLEN(passengers))
+				for(var/M in passengers + pilot)
+					var/mob/living/L = M
+					L.adjustBruteLoss(300)
+			explosion(loc, 0, 0, 2)
+			robogibs(loc)
+			robogibs(loc)
+			qdel(src)
 
 	update_icons()
 
@@ -512,8 +522,8 @@ obj/spacepod/proc/add_equipment(mob/user, var/obj/item/spacepod_equipment/SPE, v
 	to_chat(user, "<span class='warning'>You need an open hand to do that.</span>")
 
 
-/obj/spacepod/hear_talk/hear_talk(mob/M, var/msg)
-	cargo_hold.hear_talk(M, msg)
+/obj/spacepod/hear_talk/hear_talk(mob/M, list/message_pieces)
+	cargo_hold.hear_talk(M, message_pieces)
 	..()
 
 /obj/spacepod/hear_message(mob/M, var/msg)
@@ -557,10 +567,13 @@ obj/spacepod/proc/add_equipment(mob/user, var/obj/item/spacepod_equipment/SPE, v
 
 /obj/spacepod/syndi
 	name = "syndicate spacepod"
-	desc = "An armed spacepod painted in syndicate colors."
+	desc = "A spacepod painted in syndicate colors."
 	icon_state = "pod_synd"
 	health = 400
 	unlocked = FALSE
+
+/obj/spacepod/syndi/unlocked
+	unlocked = TRUE
 
 /obj/spacepod/sec/New()
 	..()
@@ -812,10 +825,17 @@ obj/spacepod/proc/add_equipment(mob/user, var/obj/item/spacepod_equipment/SPE, v
 	if(!istype(user))
 		return
 
-	if(usr.incapacitated()) // unconscious and restrained people can't let themselves out
+	if(usr.stat != CONSCIOUS) // unconscious people can't let themselves out
 		return
 
 	occupant_sanity_check()
+
+	if(usr.restrained())
+		to_chat(usr, "<span class='notice'>You attempt to stumble out of the [src]. This will take two minutes.</span>")
+		if(pilot)
+			to_chat(pilot, "<span class='warning'>[usr] is trying to escape the [src].</span>")
+		if(!do_after(usr, 1200, target = src))
+			return
 
 	if(user == pilot)
 		user.forceMove(get_turf(src))
@@ -1077,6 +1097,6 @@ obj/spacepod/proc/add_equipment(mob/user, var/obj/item/spacepod_equipment/SPE, v
 #undef DAMAGE
 #undef FIRE
 #undef WINDOW
-#undef LIGHT
+#undef POD_LIGHT
 #undef RIM
 #undef PAINT

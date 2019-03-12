@@ -3,6 +3,7 @@
 	layer = 4.0
 	animate_movement = 2
 	pressure_resistance = 8
+	dont_save = TRUE //to avoid it messing up in buildmode saving
 	var/datum/mind/mind
 
 	var/stat = 0 //Whether a mob is alive or dead. TODO: Move this to living - Nodrak
@@ -29,12 +30,12 @@
 	var/computer_id = null
 	var/lastattacker = null
 	var/lastattacked = null
-	var/attack_log = list( )
+	var/list/attack_log = list( )
+	var/list/debug_log = null
 	var/last_log = 0
 	var/obj/machinery/machine = null
 	var/other_mobs = null
 	var/memory = ""
-	var/atom/movable/pulling = null
 	var/next_move = null
 	var/notransform = null	//Carbon
 	var/other = 0.0
@@ -44,11 +45,9 @@
 	var/med_record = ""
 	var/sec_record = ""
 	var/gen_record = ""
-	var/blinded = null
 	var/bhunger = 0			//Carbon
 	var/lying = 0
 	var/lying_prev = 0
-	var/canmove = 1
 	var/lastpuke = 0
 	var/unacidable = 0
 	var/can_strip = 1
@@ -198,3 +197,5 @@
 	var/list/progressbars = null	//for stacking do_after bars
 
 	var/list/tkgrabbed_objects = list() // Assoc list of items to TK grabs
+
+	var/forced_look = null // This can either be a numerical direction or a soft object reference (UID). It makes the mob always face towards the selected thing.

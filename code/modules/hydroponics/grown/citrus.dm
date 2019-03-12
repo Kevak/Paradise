@@ -5,6 +5,7 @@
 	desc = "It's so sour, your face will twist."
 	icon_state = "lime"
 	bitesize_mod = 2
+	wine_power = 0.3
 
 // Lime
 /obj/item/seeds/lime
@@ -29,6 +30,7 @@
 	desc = "It's so sour, your face will twist."
 	icon_state = "lime"
 	filling_color = "#00FF00"
+	distill_reagent = "triple_sec"
 
 // Orange
 /obj/item/seeds/orange
@@ -104,12 +106,14 @@
 	desc = "Made for burning houses down."
 	icon_state = "firelemon"
 	bitesize_mod = 2
+	wine_power = 0.7
+	wine_flavor = "fire"
 
 /obj/item/reagent_containers/food/snacks/grown/firelemon/attack_self(mob/living/user)
 	var/area/A = get_area(user)
 	user.visible_message("<span class='warning'>[user] primes the [src]!</span>", "<span class='userdanger'>You prime the [src]!</span>")
 	var/message = "[ADMIN_LOOKUPFLW(user)] primed a combustible lemon for detonation at [A] [ADMIN_COORDJMP(user)]"
-	bombers += message
+	investigate_log("[key_name(user)] primed a combustible lemon for detonation at [A] [COORD(user)].", INVESTIGATE_BOMB)
 	message_admins(message)
 	log_game("[key_name(user)] primed a combustible lemon for detonation at [A] [COORD(user)].")
 	if(iscarbon(user))
@@ -117,7 +121,7 @@
 		C.throw_mode_on()
 	icon_state = "firelemon_active"
 	playsound(loc, 'sound/weapons/armbomb.ogg', 75, 1, -3)
-	addtimer(src, "prime", rand(10, 60))
+	addtimer(CALLBACK(src, .proc/prime), rand(10, 60))
 
 /obj/item/reagent_containers/food/snacks/grown/firelemon/burn()
 	prime()

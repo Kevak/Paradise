@@ -9,7 +9,7 @@
 	item_state = "lighter-g"
 	var/icon_on = "lighter-g-on"
 	var/icon_off = "lighter-g"
-	w_class = WEIGHT_CLASS_SMALL
+	w_class = WEIGHT_CLASS_TINY
 	throwforce = 4
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
@@ -24,8 +24,7 @@
 	icon_on = "zippoon"
 	icon_off = "zippo"
 
-/obj/item/lighter/random
-	New()
+/obj/item/lighter/random/New()
 		var/color = pick("r","c","y","g")
 		icon_on = "lighter-[color]-on"
 		icon_off = "lighter-[color]"
@@ -44,7 +43,7 @@
 			attack_verb = list("burnt", "singed")
 			if(istype(src, /obj/item/lighter/zippo) )
 				user.visible_message("<span class='rose'>Without even breaking stride, [user] flips open and lights [src] in one smooth movement.</span>")
-				playsound(src.loc, 'sound/items/ZippoLight.ogg', 25, 1)
+				playsound(src.loc, 'sound/items/zippolight.ogg', 25, 1)
 			else
 				if(prob(75))
 					user.visible_message("<span class='notice'>After a few attempts, [user] manages to light the [src].</span>")
@@ -56,8 +55,7 @@
 						var/obj/item/organ/external/affecting = H.get_organ("[user.hand ? "l" : "r" ]_hand")
 						if(affecting.receive_damage( 0, 5 ))		//INFERNO
 							H.UpdateDamageIcon()
-							H.updatehealth()
-					user.visible_message("<span class='notice'>After a few attempts, [user] manages to light the [src], they however burn their finger in the process.</span>")
+					user.visible_message("<span class='notice'>After a few attempts, [user] manages to light the [src], [user.p_they()] however burn[user.p_s()] [user.p_their()] finger in the process.</span>")
 
 			set_light(2)
 			processing_objects.Add(src)
@@ -70,8 +68,8 @@
 			force = 0
 			attack_verb = null //human_defense.dm takes care of it
 			if(istype(src, /obj/item/lighter/zippo) )
-				user.visible_message("<span class='rose'>You hear a quiet click, as [user] shuts off [src] without even looking at what they're doing. Wow.")
-				playsound(src.loc, 'sound/items/ZippoClose.ogg', 25, 1)
+				user.visible_message("<span class='rose'>You hear a quiet click, as [user] shuts off [src] without even looking at what [user.p_theyre()] doing. Wow.")
+				playsound(src.loc, 'sound/items/zippoclose.ogg', 25, 1)
 			else
 				user.visible_message("<span class='notice'>[user] quietly shuts off the [src].")
 
@@ -95,7 +93,7 @@
 			cig.attackby(src, user)
 		else
 			if(istype(src, /obj/item/lighter/zippo))
-				cig.light("<span class='rose'>[user] whips the [name] out and holds it for [M]. Their arm is as steady as the unflickering flame they light \the [cig] with.</span>")
+				cig.light("<span class='rose'>[user] whips the [name] out and holds it for [M]. [user.p_their(TRUE)] arm is as steady as the unflickering flame [user.p_they()] light[user.p_s()] \the [cig] with.</span>")
 			else
 				cig.light("<span class='notice'>[user] holds the [name] out for [M], and lights the [cig.name].</span>")
 			M.update_inv_wear_mask()
@@ -184,6 +182,7 @@
 		attack_verb = list("burnt","singed")
 		processing_objects.Add(src)
 		update_icon()
+		return TRUE
 
 /obj/item/match/proc/matchburnout()
 	if(lit)
@@ -197,6 +196,7 @@
 		desc = "A match. This one has seen better days."
 		attack_verb = list("flicked")
 		processing_objects.Remove(src)
+		return TRUE
 
 /obj/item/match/dropped(mob/user)
 	matchburnout()

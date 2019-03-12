@@ -1,7 +1,7 @@
 /obj/machinery/atmospherics/binary
 	dir = SOUTH
 	initialize_directions = SOUTH|NORTH
-	use_power = 1
+	use_power = IDLE_POWER_USE
 
 	var/datum/gas_mixture/air1
 	var/datum/gas_mixture/air2
@@ -41,7 +41,7 @@
 		nullifyPipenet(parent2)
 	return ..()
 
-/obj/machinery/atmospherics/binary/initialize()
+/obj/machinery/atmospherics/binary/atmos_init()
 	..()
 	var/node2_connect = dir
 	var/node1_connect = turn(dir, 180)

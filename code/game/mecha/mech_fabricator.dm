@@ -5,7 +5,7 @@
 	desc = "Nothing is being built."
 	density = TRUE
 	anchored = TRUE
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 20
 	active_power_usage = 5000
 	var/time_coeff = 1
@@ -39,7 +39,7 @@
 /obj/machinery/mecha_part_fabricator/New()
 	var/datum/component/material_container/materials = AddComponent(/datum/component/material_container,
 		list(MAT_METAL, MAT_GLASS, MAT_SILVER, MAT_GOLD, MAT_DIAMOND, MAT_PLASMA, MAT_URANIUM, MAT_BANANIUM, MAT_TRANQUILLITE, MAT_TITANIUM, MAT_BLUESPACE), 0,
-		FALSE, list(/obj/item/stack, /obj/item/ore/bluespace_crystal), CALLBACK(src, .proc/is_insertion_ready), CALLBACK(src, .proc/AfterMaterialInsert))
+		FALSE, /obj/item/stack, CALLBACK(src, .proc/is_insertion_ready), CALLBACK(src, .proc/AfterMaterialInsert))
 	materials.precise_insertion = TRUE
 	..()
 	component_parts = list()
@@ -104,7 +104,7 @@
 	return output
 
 /obj/machinery/mecha_part_fabricator/proc/output_part_info(datum/design/D)
-	var/output = "[initial(D.name)] (Cost: [output_part_cost(D)]) [get_construction_time_w_coeff(D)/10]sec"
+	var/output = "[initial(D.name)] (Cost: [output_part_cost(D)]) [get_construction_time_w_coeff(D)/10] seconds"
 	return output
 
 /obj/machinery/mecha_part_fabricator/proc/output_part_cost(datum/design/D)
@@ -151,22 +151,23 @@
 	GET_COMPONENT(materials, /datum/component/material_container)
 	materials.use_amount(res_coef)
 	overlays += "fab-active"
-	use_power = 2
+	use_power = ACTIVE_POWER_USE
 	updateUsrDialog()
 	sleep(get_construction_time_w_coeff(D))
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	overlays -= "fab-active"
 	desc = initial(desc)
 
-	var/obj/item/I = new D.build_path
+	var/obj/item/I = new D.build_path(loc)
 	if(D.locked)
-		var/obj/item/storage/lockbox/large/L = new /obj/item/storage/lockbox/large(get_step(src,SOUTH)) //(Don't use capitals in paths, or single letters.
-		I.loc = L
+		var/obj/item/storage/lockbox/large/L = new /obj/item/storage/lockbox/large(get_step(src, SOUTH)) //(Don't use capitals in paths, or single letters.
+		I.forceMove(L)
 		L.name += " [initial(I.name)]"
 		L.origin_tech = I.origin_tech
 	else
-		I.loc = get_step(src,SOUTH)
-	I.materials = res_coef
+		I.forceMove(get_step(src, SOUTH))
+	if(istype(I))
+		I.materials = res_coef
 	atom_say("[I] is complete.")
 	being_built = null
 
@@ -304,8 +305,8 @@
 			if("parts")
 				left_part += output_parts_list(part_set)
 				left_part += "<hr><a href='?src=[UID()];screen=main'>Return</a>"
-	dat = {"<html>
-			  <head>
+	dat = {"
+
 			  <title>[name]</title>
 				<style>
 				.res_name {font-weight: bold; text-transform: capitalize;}
@@ -320,21 +321,20 @@
 				<script language='javascript' type='text/javascript'>
 				[js_byjax]
 				</script>
-				</head><body>
-				<body>
+
 				<table style='width: 100%;'>
 				<tr>
 				<td style='width: 65%; padding-right: 10px;'>
 				[left_part]
 				</td>
-				<td style='width: 35%; background: #ccc;' id='queue'>
+				<td style='width: 35%; background: #000;' id='queue'>
 				[list_queue()]
 				</td>
 				<tr>
-				</table>
-				</body>
-				</html>"}
-	user << browse(dat, "window=mecha_fabricator;size=1000x430")
+				</table>"}
+	var/datum/browser/popup = new(user, "mecha_fabricator", name, 1000, 600)
+	popup.set_content(dat)
+	popup.open(0)
 	onclose(user, "mecha_fabricator")
 	return
 
@@ -461,6 +461,19 @@
 								"Pod_Parts",
 								"Pod_Frame",
 								"Misc")
+	req_access = list(access_mechanic)
+
+/obj/machinery/mecha_part_fabricator/spacepod/New()
+	..()
+	QDEL_LIST(component_parts)
+	component_parts = list()
+	component_parts += new /obj/item/circuitboard/podfab(null)
+	component_parts += new /obj/item/stock_parts/matter_bin(null)
+	component_parts += new /obj/item/stock_parts/matter_bin(null)
+	component_parts += new /obj/item/stock_parts/manipulator(null)
+	component_parts += new /obj/item/stock_parts/micro_laser(null)
+	component_parts += new /obj/item/stock_parts/console_screen(null)
+	RefreshParts()
 
 /obj/machinery/mecha_part_fabricator/robot
 	name = "Robotic Fabricator"

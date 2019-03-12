@@ -326,7 +326,7 @@
 
 		var/turf/T = deploy_location
 		if(!is_mining_level(T.z))//only report capsules away from the mining/lavaland level
-			message_admins("[key_name_admin(usr)] (<A HREF='?_src_=holder;adminmoreinfo=\ref[usr]'>?</A>) (<A HREF='?_src_=holder;adminplayerobservefollow=\ref[usr]'>FLW</A>) activated a bluespace capsule away from the mining level! (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>JMP</a>)")
+			message_admins("[key_name_admin(usr)] ([ADMIN_QUE(usr,"?")]) ([ADMIN_FLW(usr,"FLW")]) activated a bluespace capsule away from the mining level! (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>JMP</a>)")
 			log_admin("[key_name(usr)] activated a bluespace capsule away from the mining level at [T.x], [T.y], [T.z]")
 		template.load(deploy_location, centered = TRUE)
 		new /obj/effect/particle_effect/smoke(get_turf(src))
@@ -341,19 +341,27 @@
 //Pod turfs and objects
 
 //Window
+/obj/structure/window/shuttle/survival_pod
+	name = "pod window"
+	icon = 'icons/obj/smooth_structures/pod_window.dmi'
+	icon_state = "smooth"
+	dir = FULLTILE_WINDOW_DIR
+	max_integrity = 100
+	fulltile = TRUE
+	reinf = TRUE
+	heat_resistance = 1600
+	armor = list("melee" = 50, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 50, "bio" = 100, "rad" = 100)
+	smooth = SMOOTH_MORE
+	canSmoothWith = list(/turf/simulated/wall/mineral/titanium/survival, /obj/machinery/door/airlock/survival_pod, /obj/structure/window/shuttle/survival_pod)
+	explosion_block = 3
+	level = 3
+	glass_type = /obj/item/stack/sheet/titaniumglass
+	glass_amount = 2
+
 /obj/structure/window/reinforced/survival_pod
 	name = "pod window"
 	icon = 'icons/obj/lavaland/survival_pod.dmi'
 	icon_state = "pwindow"
-
-// This override can be removed whenever we get rid of the stupid fucking `dir = 9` = full tile!!!! shit
-/obj/structure/window/reinforced/survival_pod/CanPass(atom/movable/mover, turf/target, height=0)
-	if(istype(mover) && mover.checkpass(PASSGLASS))
-		return 1
-	if(get_dir(loc, target) == dir)
-		return !density
-	else
-		return 1
 
 //Floors
 /turf/simulated/floor/pod
@@ -434,7 +442,7 @@
 	attack_self(user)
 
 //Bed
-/obj/structure/stool/bed/pod
+/obj/structure/bed/pod
 	icon = 'icons/obj/lavaland/survival_pod.dmi'
 	icon_state = "bed"
 
@@ -515,7 +523,7 @@
 	icon_state = "fan_tiny"
 	buildstackamount = 2
 
-/obj/structure/fans/New(loc)
+/obj/structure/fans/Initialize(loc)
 	..()
 	air_update_turf(1)
 

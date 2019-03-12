@@ -149,10 +149,10 @@ won't update every console in existence) but it's more of a hassle to do. Also, 
 	matching_designs = list()
 	if(!id)
 		for(var/obj/machinery/r_n_d/server/centcom/S in world)
-			S.initialize()
+			S.initialize_serv()
 			break
 
-/obj/machinery/computer/rdconsole/initialize()
+/obj/machinery/computer/rdconsole/Initialize()
 	..()
 	SyncRDevices()
 
@@ -426,7 +426,7 @@ won't update every console in existence) but it's more of a hassle to do. Also, 
 				var/key = usr.key	//so we don't lose the info during the spawn delay
 				if(!(being_built.build_type & PROTOLATHE))
 					g2g = 0
-					message_admins("Protolathe exploit attempted by [key_name(usr, usr.client)]!")
+					message_admins("Protolathe exploit attempted by [key_name(usr, TRUE)]!")
 
 				if(g2g) //If input is incorrect, nothing happens
 					var/new_coeff = coeff * being_built.lathe_time_factor
@@ -502,7 +502,7 @@ won't update every console in existence) but it's more of a hassle to do. Also, 
 				power = max(2000, power)
 				if(!(being_built.build_type & IMPRINTER))
 					g2g = 0
-					message_admins("Circuit imprinter exploit attempted by [key_name(usr, usr.client)]!")
+					message_admins("Circuit imprinter exploit attempted by [key_name(usr, TRUE)]!")
 
 				if(g2g) //Again, if input is wrong, do nothing
 					add_wait_message("Imprinting Circuit. Please Wait...", IMPRINTER_DELAY)
@@ -887,7 +887,7 @@ won't update every console in existence) but it's more of a hassle to do. Also, 
 //helper proc that guarantees the wait message will not freeze the UI
 /obj/machinery/computer/rdconsole/proc/add_wait_message(message, delay)
 	wait_message = message
-	wait_message_timer = addtimer(src, "clear_wait_message", delay, TRUE)
+	wait_message_timer = addtimer(CALLBACK(src, .proc/clear_wait_message), delay, TIMER_UNIQUE | TIMER_STOPPABLE)
 
 // This is here to guarantee that we never lock the console, so long as the timer
 // process is running

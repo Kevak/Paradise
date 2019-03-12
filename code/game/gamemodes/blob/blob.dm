@@ -12,6 +12,7 @@ var/list/blob_nodes = list()
 	required_enemies = 1
 	recommended_enemies = 1
 	restricted_jobs = list("Cyborg", "AI")
+	free_golems_disabled = TRUE
 
 	var/declared = 0
 	var/burst = 0
@@ -54,8 +55,8 @@ var/list/blob_nodes = list()
 
 /datum/game_mode/blob/proc/get_blob_candidates()
 	var/list/candidates = list()
-	for(var/mob/living/carbon/human/player in player_list)
-		if(!player.stat && player.mind && !player.mind.special_role && !jobban_isbanned(player, "Syndicate") && (ROLE_BLOB in player.client.prefs.be_special))
+	for(var/mob/living/carbon/human/player in GLOB.player_list)
+		if(!player.stat && player.mind && !player.client.skip_antag && !player.mind.special_role && !jobban_isbanned(player, "Syndicate") && (ROLE_BLOB in player.client.prefs.be_special))
 			candidates += player
 	return candidates
 
@@ -113,13 +114,13 @@ var/list/blob_nodes = list()
 
 	if(iscarbon(blob.current))
 		var/mob/living/carbon/C = blob.current
-		if(directory[ckey(blob.key)])
-			blob_client = directory[ckey(blob.key)]
+		if(GLOB.directory[ckey(blob.key)])
+			blob_client = GLOB.directory[ckey(blob.key)]
 			location = get_turf(C)
 			if(!is_station_level(location.z) || istype(location, /turf/space))
 				if(!warned)
 					to_chat(C, "<span class='userdanger'>You feel ready to burst, but this isn't an appropriate place!  You must return to the station!</span>")
-					message_admins("[key_name_admin(C)] was in space when the blobs burst, and will die if he doesn't return to the station.")
+					message_admins("[key_name_admin(C)] was in space when the blobs burst, and will die if [C.p_they()] [C.p_do()] not return to the station.")
 					spawn(300)
 						burst_blob(blob, 1)
 				else
@@ -145,8 +146,8 @@ var/list/blob_nodes = list()
 	for(var/datum/mind/blob in infected_crew)
 		greet_blob(blob)
 
-	if(shuttle_master)
-		shuttle_master.emergencyNoEscape = 1
+	if(SSshuttle)
+		SSshuttle.emergencyNoEscape = 1
 
 	spawn(0)
 

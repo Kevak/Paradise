@@ -13,13 +13,16 @@
 /datum/reagent/consumable/ethanol/on_mob_life(mob/living/M)
 	M.AdjustDrunk(alcohol_perc)
 	M.AdjustDizzy(dizzy_adj)
-	..()
+	return ..()
 
 /datum/reagent/consumable/ethanol/reaction_obj(obj/O, volume)
 	if(istype(O,/obj/item/paper))
-		var/obj/item/paper/paperaffected = O
-		paperaffected.clearpaper()
-		to_chat(usr, "The solution melts away the ink on the paper.")
+		if(istype(O,/obj/item/paper/contract/infernal))
+			to_chat(usr, "The solution ignites on contact with the [O].")
+		else
+			var/obj/item/paper/paperaffected = O
+			paperaffected.clearpaper()
+			to_chat(usr, "The solution melts away the ink on the paper.")
 	if(istype(O,/obj/item/book))
 		if(volume >= 5)
 			var/obj/item/book/affectedbook = O
@@ -67,6 +70,7 @@
 	drink_icon = "whiskeyglass"
 	drink_name = "Glass of whiskey"
 	drink_desc = "The silky, smokey whiskey goodness inside the glass makes the drink look very classy."
+	taste_message = "whiskey"
 
 /datum/reagent/consumable/ethanol/specialwhiskey
 	name = "Special Blend Whiskey"
@@ -86,6 +90,7 @@
 	drink_icon = "ginvodkaglass"
 	drink_name = "Glass of gin"
 	drink_desc = "A crystal clear glass of Griffeater gin."
+	taste_message = "gin"
 
 /datum/reagent/consumable/ethanol/absinthe
 	name = "Absinthe"
@@ -103,10 +108,12 @@
 //copy paste from LSD... shoot me
 /datum/reagent/consumable/ethanol/absinthe/on_mob_life(mob/living/M)
 	M.AdjustHallucinate(5)
-	..()
+	return ..()
 
 /datum/reagent/consumable/ethanol/absinthe/overdose_process(mob/living/M, severity)
-	M.adjustToxLoss(1)
+	var/update_flags = STATUS_UPDATE_NONE
+	update_flags |= M.adjustToxLoss(1, FALSE)
+	return list(0, update_flags)
 
 /datum/reagent/consumable/ethanol/rum
 	name = "Rum"
@@ -119,9 +126,12 @@
 	drink_icon = "rumglass"
 	drink_name = "Glass of Rum"
 	drink_desc = "Now you want to Pray for a pirate suit, don't you?"
+	taste_message = "rum"
 
 /datum/reagent/consumable/ethanol/rum/overdose_process(mob/living/M, severity)
-	M.adjustToxLoss(1)
+	var/update_flags = STATUS_UPDATE_NONE
+	update_flags |= M.adjustToxLoss(1, FALSE)
+	return list(0, update_flags)
 
 /datum/reagent/consumable/ethanol/mojito
 	name = "Mojito"
@@ -143,6 +153,7 @@
 	drink_icon = "ginvodkaglass"
 	drink_name = "Glass of vodka"
 	drink_desc = "The glass contain wodka. Xynta."
+	taste_message = "vodka"
 
 /datum/reagent/consumable/ethanol/sake
 	name = "Sake"
@@ -164,6 +175,7 @@
 	drink_icon = "tequilaglass"
 	drink_name = "Glass of Tequila"
 	drink_desc = "Now all that's missing is the weird colored shades!"
+	taste_message = "tequila"
 
 /datum/reagent/consumable/ethanol/vermouth
 	name = "Vermouth"
@@ -198,6 +210,7 @@
 	drink_icon = "cognacglass"
 	drink_name = "Glass of cognac"
 	drink_desc = "Damn, you feel like some kind of French aristocrat just by holding this."
+	taste_message = "cognac"
 
 /datum/reagent/consumable/ethanol/suicider //otherwise known as "I want to get so smashed my liver gives out and I die from alcohol poisoning".
 	name = "Suicider"
@@ -237,12 +250,13 @@
 	taste_message = "party"
 
 /datum/reagent/consumable/ethanol/thirteenloko/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	M.AdjustDrowsy(-7)
-	M.AdjustSleeping(-2)
+	update_flags |= M.AdjustSleeping(-2, FALSE)
 	if(M.bodytemperature > 310)
 		M.bodytemperature = max(310, M.bodytemperature - (5 * TEMPERATURE_DAMAGE_COEFFICIENT))
 	M.Jitter(5)
-	..()
+	return ..() | update_flags
 
 
 /////////////////////////////////////////////////////////////////cocktail entities//////////////////////////////////////////////
@@ -270,7 +284,7 @@
 	drink_icon = "atomicbombglass"
 	drink_name = "Atomic Bomb"
 	drink_desc = "Nanotrasen cannot take legal responsibility for your actions after imbibing."
-	taste_message = "fruity alcohol"
+	taste_message = "a long, fiery burn"
 
 /datum/reagent/consumable/ethanol/threemileisland
 	name = "THree Mile Island Iced Tea"
@@ -282,7 +296,7 @@
 	drink_icon = "threemileislandglass"
 	drink_name = "Three Mile Island Ice Tea"
 	drink_desc = "A glass of this is sure to prevent a meltdown."
-	taste_message = "fruity alcohol"
+	taste_message = "a creeping heat"
 
 /datum/reagent/consumable/ethanol/goldschlager
 	name = "Goldschlager"
@@ -294,6 +308,7 @@
 	drink_icon = "ginvodkaglass"
 	drink_name = "Glass of goldschlager"
 	drink_desc = "100 proof that teen girls will drink anything with gold in it."
+	taste_message = "a deep, spicy warmth"
 
 /datum/reagent/consumable/ethanol/patron
 	name = "Patron"
@@ -305,6 +320,7 @@
 	drink_icon = "patronglass"
 	drink_name = "Glass of Patron"
 	drink_desc = "Drinking patron in the bar, with all the subpar ladies."
+	taste_message = "a gift"
 
 /datum/reagent/consumable/ethanol/gintonic
 	name = "Gin and Tonic"
@@ -316,6 +332,7 @@
 	drink_icon = "gintonicglass"
 	drink_name = "Gin and Tonic"
 	drink_desc = "A mild but still great cocktail. Drink up, like a true Englishman."
+	taste_message = "bitter medicine"
 
 /datum/reagent/consumable/ethanol/cuba_libre
 	name = "Cuba Libre"
@@ -328,6 +345,7 @@
 	drink_name = "Cuba Libre"
 	drink_desc = "A classic mix of rum and cola."
 	taste_message = "fruity alcohol"
+	taste_message = "liberation"
 
 /datum/reagent/consumable/ethanol/whiskey_cola
 	name = "Whiskey Cola"
@@ -351,7 +369,7 @@
 	drink_icon = "martiniglass"
 	drink_name = "Classic Martini"
 	drink_desc = "Damn, the bartender even stirred it, not shook it."
-	taste_message = "martini"
+	taste_message = "class"
 
 /datum/reagent/consumable/ethanol/vodkamartini
 	name = "Vodka Martini"
@@ -363,6 +381,7 @@
 	drink_icon = "martiniglass"
 	drink_name = "Vodka martini"
 	drink_desc ="A bastardisation of the classic martini. Still great."
+	taste_message = "class and potatoes"
 
 /datum/reagent/consumable/ethanol/white_russian
 	name = "White Russian"
@@ -374,7 +393,7 @@
 	drink_icon = "whiterussianglass"
 	drink_name = "White Russian"
 	drink_desc = "A very nice looking drink. But that's just, like, your opinion, man."
-	taste_message = "creamy alcohol"
+	taste_message = "very creamy alcohol"
 
 /datum/reagent/consumable/ethanol/screwdrivercocktail
 	name = "Screwdriver"
@@ -386,19 +405,19 @@
 	drink_icon = "screwdriverglass"
 	drink_name = "Screwdriver"
 	drink_desc = "A simple, yet superb mixture of Vodka and orange juice. Just the thing for the tired engineer."
-	taste_message = "fruity alcohol"
+	taste_message = "a naughty secret"
 
 /datum/reagent/consumable/ethanol/booger
 	name = "Booger"
 	id = "booger"
-	description = "Ewww..."
+	description = "Eww..."
 	reagent_state = LIQUID
 	color = "#A68310" // rgb: 166, 131, 16
 	alcohol_perc = 0.2
 	drink_icon = "booger"
 	drink_name = "Booger"
-	drink_desc = "Ewww..."
-	taste_message = "sweet alcohol"
+	drink_desc = "Eww..."
+	taste_message = "a fruity mess"
 
 /datum/reagent/consumable/ethanol/bloody_mary
 	name = "Bloody Mary"
@@ -475,7 +494,7 @@
 /datum/reagent/consumable/ethanol/toxins_special/on_mob_life(mob/living/M)
 	if(M.bodytemperature < 330)
 		M.bodytemperature = min(330, M.bodytemperature + (15 * TEMPERATURE_DAMAGE_COEFFICIENT)) //310 is the normal bodytemp. 310.055
-	..()
+	return ..()
 
 /datum/reagent/consumable/ethanol/beepsky_smash
 	name = "Beepsky Smash"
@@ -491,8 +510,9 @@
 	taste_message = "THE LAW"
 
 /datum/reagent/consumable/ethanol/beepsky_smash/on_mob_life(mob/living/M)
-	M.Stun(1)
-	..()
+	var/update_flag = STATUS_UPDATE_NONE
+	update_flag |= M.Stun(1, FALSE)
+	return ..() | update_flag
 
 /datum/reagent/consumable/ethanol/irish_cream
 	name = "Irish Cream"
@@ -551,7 +571,7 @@
 	drink_icon = "b52glass"
 	drink_name = "B-52"
 	drink_desc = "Kahlua, Irish Cream, and congac. You will get bombed."
-	taste_message = "creamy alcohol"
+	taste_message = "destruction"
 
 /datum/reagent/consumable/ethanol/irishcoffee
 	name = "Irish Coffee"
@@ -575,7 +595,7 @@
 	drink_icon = "margaritaglass"
 	drink_name = "Margarita"
 	drink_desc = "On the rocks with salt on the rim. Arriba~!"
-	taste_message = "fruity alcohol"
+	taste_message = "daisies"
 
 /datum/reagent/consumable/ethanol/black_russian
 	name = "Black Russian"
@@ -599,7 +619,7 @@
 	drink_icon = "manhattanglass"
 	drink_name = "Manhattan"
 	drink_desc = "The Detective's undercover drink of choice. He never could stomach gin..."
-	taste_message = "bitter alcohol"
+	taste_message = "a bustling city"
 
 /datum/reagent/consumable/ethanol/manhattan_proj
 	name = "Manhattan Project"
@@ -611,7 +631,7 @@
 	drink_icon = "proj_manhattanglass"
 	drink_name = "Manhattan Project"
 	drink_desc = "A scientist's drink of choice, for thinking how to blow up the station."
-	taste_message = "bitter alcohol"
+	taste_message = "the apocalypse"
 
 /datum/reagent/consumable/ethanol/whiskeysoda
 	name = "Whiskey Soda"
@@ -640,7 +660,7 @@
 /datum/reagent/consumable/ethanol/antifreeze/on_mob_life(mob/living/M)
 	if(M.bodytemperature < 330)
 		M.bodytemperature = min(330, M.bodytemperature + (20 * TEMPERATURE_DAMAGE_COEFFICIENT)) //310 is the normal bodytemp. 310.055
-	..()
+	return ..()
 
 /datum/reagent/consumable/ethanol/barefoot
 	name = "Barefoot"
@@ -652,7 +672,7 @@
 	drink_icon = "b&p"
 	drink_name = "Barefoot"
 	drink_desc = "Barefoot and pregnant"
-	taste_message = "sweet alcohol"
+	taste_message = "pregnancy"
 
 /datum/reagent/consumable/ethanol/snowwhite
 	name = "Snow White"
@@ -664,7 +684,7 @@
 	drink_icon = "snowwhite"
 	drink_name = "Snow White"
 	drink_desc = "A cold refreshment."
-	taste_message = "refreshing alcohol"
+	taste_message = "a poisoned apple"
 
 /datum/reagent/consumable/ethanol/demonsblood
 	name = "Demons Blood"
@@ -690,7 +710,7 @@
 	drink_icon = "vodkatonicglass"
 	drink_name = "Vodka and Tonic"
 	drink_desc = "For when a gin and tonic isn't russian enough."
-	taste_message = "fizzy alcohol"
+	taste_message = "bitter medicine"
 
 /datum/reagent/consumable/ethanol/ginfizz
 	name = "Gin Fizz"
@@ -715,7 +735,7 @@
 	drink_icon = "bahama_mama"
 	drink_name = "Bahama Mama"
 	drink_desc = "Tropic cocktail"
-	taste_message = "fruity alcohol"
+	taste_message = "HONK"
 
 /datum/reagent/consumable/ethanol/singulo
 	name = "Singulo"
@@ -740,7 +760,7 @@
 	drink_icon = "sbitenglass"
 	drink_name = "Sbiten"
 	drink_desc = "A spicy mix of Vodka and Spice. Very hot."
-	taste_message = "spicy alcohol"
+	taste_message = "comforting warmth"
 
 /datum/reagent/consumable/ethanol/sbiten/on_mob_life(mob/living/M)
 	if(M.bodytemperature < 360)
@@ -757,7 +777,7 @@
 	drink_icon = "devilskiss"
 	drink_name = "Devils Kiss"
 	drink_desc = "Creepy time!"
-	taste_message = "blood"
+	taste_message = "naughtiness"
 
 /datum/reagent/consumable/ethanol/red_mead
 	name = "Red Mead"
@@ -782,7 +802,7 @@
 	drink_icon = "meadglass"
 	drink_name = "Mead"
 	drink_desc = "A Vikings Beverage, though a cheap one."
-	taste_message = "sweet alcohol"
+	taste_message = "honey"
 
 /datum/reagent/consumable/ethanol/iced_beer
 	name = "Iced Beer"
@@ -794,7 +814,7 @@
 	drink_icon = "iced_beerglass"
 	drink_name = "Iced Beer"
 	drink_desc = "A beer so frosty, the air around it freezes."
-	taste_message = "refreshing alcohol"
+	taste_message = "cold beer"
 
 /datum/reagent/consumable/ethanol/iced_beer/on_mob_life(mob/living/M)
 	if(M.bodytemperature > 270)
@@ -811,7 +831,7 @@
 	drink_icon = "grogglass"
 	drink_name = "Grog"
 	drink_desc = "A fine and cepa drink for Space."
-	taste_message = "rum"
+	taste_message = "strongly diluted rum"
 
 /datum/reagent/consumable/ethanol/aloe
 	name = "Aloe"
@@ -823,7 +843,7 @@
 	drink_icon = "aloe"
 	drink_name = "Aloe"
 	drink_desc = "Very, very, very good."
-	taste_message = "sweet alcohol"
+	taste_message = "healthy skin"
 
 /datum/reagent/consumable/ethanol/andalusia
 	name = "Andalusia"
@@ -847,7 +867,7 @@
 	drink_icon = "alliescocktail"
 	drink_name = "Allies cocktail"
 	drink_desc = "A drink made from your allies."
-	taste_message = "bitter alcohol"
+	taste_message = "victory"
 
 /datum/reagent/consumable/ethanol/acid_spit
 	name = "Acid Spit"
@@ -888,13 +908,14 @@
 	taste_message = "brain damageeeEEeee"
 
 /datum/reagent/consumable/ethanol/neurotoxin/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	if(current_cycle >= 13)
-		M.Weaken(3)
+		update_flags |= M.Weaken(3, FALSE)
 	if(current_cycle >= 55)
-		M.Druggy(55)
+		update_flags |= M.Druggy(55, FALSE)
 	if(current_cycle >= 200)
-		M.adjustToxLoss(2)
-	..()
+		update_flags |= M.adjustToxLoss(2, FALSE)
+	return ..() | update_flags
 
 /datum/reagent/consumable/ethanol/hippies_delight
 	name = "Hippie's Delight"
@@ -906,27 +927,32 @@
 	drink_icon = "hippiesdelightglass"
 	drink_name = "Hippie's Delight"
 	drink_desc = "A drink enjoyed by people during the 1960's."
+	taste_message = "colors"
 
 /datum/reagent/consumable/ethanol/hippies_delight/on_mob_life(mob/living/M)
-	M.Druggy(50)
+	var/update_flags = STATUS_UPDATE_NONE
+	update_flags |= M.Druggy(50, FALSE)
 	switch(current_cycle)
 		if(1 to 5)
-			if(!M.stuttering) M.stuttering = 1
+			M.Stuttering(1)
 			M.Dizzy(10)
-			if(prob(10)) M.emote(pick("twitch","giggle"))
+			if(prob(10))
+				M.emote(pick("twitch","giggle"))
 		if(5 to 10)
-			if(!M.stuttering) M.stuttering = 1
+			M.Stuttering(1)
 			M.Jitter(20)
 			M.Dizzy(20)
-			M.Druggy(45)
-			if(prob(20)) M.emote(pick("twitch","giggle"))
+			update_flags |= M.Druggy(45, FALSE)
+			if(prob(20))
+				M.emote(pick("twitch","giggle"))
 		if(10 to INFINITY)
-			if(!M.stuttering) M.stuttering = 1
+			M.Stuttering(1)
 			M.Jitter(40)
 			M.Dizzy(40)
-			M.Druggy(60)
-			if(prob(30)) M.emote(pick("twitch","giggle"))
-	..()
+			update_flags |= M.Druggy(60, FALSE)
+			if(prob(30))
+				M.emote(pick("twitch","giggle"))
+	return ..() | update_flags
 
 /datum/reagent/consumable/ethanol/changelingsting
 	name = "Changeling Sting"
@@ -952,7 +978,7 @@
 	drink_icon = "irishcarbomb"
 	drink_name = "Irish Car Bomb"
 	drink_desc = "An irish car bomb."
-	taste_message = "creamy alcohol"
+	taste_message = "troubles"
 
 /datum/reagent/consumable/ethanol/syndicatebomb
 	name = "Syndicate Bomb"
@@ -976,7 +1002,7 @@
 	drink_icon = "erikasurprise"
 	name = "Erika Surprise"
 	drink_desc = "The surprise is, it's green!"
-	taste_message = "sweet alcohol"
+	taste_message = "disappointment"
 
 /datum/reagent/consumable/ethanol/driestmartini
 	name = "Driest Martini"
@@ -989,12 +1015,12 @@
 	drink_icon = "driestmartiniglass"
 	drink_name = "Driest Martini"
 	drink_desc = "Only for the experienced. You think you see sand floating in the glass."
-	taste_message = "bitter alcohol"
+	taste_message = "dust and ashes"
 
 /datum/reagent/consumable/ethanol/driestmartini/on_mob_life(mob/living/M)
 	if(current_cycle >= 55 && current_cycle < 115)
-		M.stuttering += 10
-	..()
+		M.AdjustStuttering(10)
+	return ..()
 
 /datum/reagent/consumable/ethanol/kahlua
 	name = "Kahlua"
@@ -1005,14 +1031,15 @@
 	drink_icon = "kahluaglass"
 	drink_name = "Glass of RR coffee Liquor"
 	drink_desc = "DAMN, THIS THING LOOKS ROBUST"
-	taste_message = "sweet alcohol"
+	taste_message = "coffee and alcohol"
 
 /datum/reagent/consumable/ethanol/kahlua/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	M.AdjustDizzy(-5)
 	M.AdjustDrowsy(-3)
-	M.AdjustSleeping(-2)
+	update_flags |= (M.AdjustSleeping(-2) ? STATUS_UPDATE_STAT : STATUS_UPDATE_NONE)
 	M.Jitter(5)
-	..()
+	return ..() | update_flags
 
 /datum/reagent/ginsonic
 	name = "Gin and sonic"
@@ -1026,11 +1053,12 @@
 	taste_message = "SPEED"
 
 /datum/reagent/ginsonic/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	M.AdjustDrowsy(-5)
 	if(prob(25))
-		M.AdjustParalysis(-1)
-		M.AdjustStunned(-1)
-		M.AdjustWeakened(-1)
+		update_flags |= M.AdjustParalysis(-1, FALSE)
+		update_flags |= M.AdjustStunned(-1, FALSE)
+		update_flags |= M.AdjustWeakened(-1, FALSE)
 	if(prob(8))
 		M.reagents.add_reagent("methamphetamine",1.2)
 		var/sonic_message = pick("Gotta go fast!", "Time to speed, keed!", "I feel a need for speed!", "Let's juice.", "Juice time.", "Way Past Cool!")
@@ -1038,7 +1066,7 @@
 			M.say("[sonic_message]")
 		else
 			to_chat(M, "<span class='notice'>[sonic_message ]</span>")
-	..()
+	return ..() | update_flags
 
 /datum/reagent/consumable/ethanol/applejack
 	name = "Applejack"
@@ -1101,6 +1129,7 @@
 			M.adjust_fire_stacks(3)
 
 /datum/reagent/consumable/ethanol/dragons_breath/on_mob_life(mob/living/M)
+	var/update_flags = STATUS_UPDATE_NONE
 	if(M.reagents.has_reagent("milk"))
 		to_chat(M, "<span class='notice'>The milk stops the burning. Ahhh.</span>")
 		M.reagents.del_reagent("milk")
@@ -1111,7 +1140,7 @@
 	if(prob(50))
 		to_chat(M, "<span class='danger'>Your throat burns terribly!</span>")
 		M.emote(pick("scream","cry","choke","gasp"))
-		M.Stun(1)
+		update_flags |= M.Stun(1, FALSE)
 	if(prob(8))
 		to_chat(M, "<span class='danger'>Why!? WHY!?</span>")
 	if(prob(8))
@@ -1125,7 +1154,7 @@
 			M.visible_message("<span class='danger'>[M] is consumed in flames!</span>")
 			M.dust()
 			return
-	..()
+	return ..() | update_flags
 
 // ROBOT ALCOHOL PAST THIS POINT
 // WOOO!
@@ -1141,7 +1170,7 @@
 	drink_icon = "synthanolglass"
 	drink_name = "Glass of Synthanol"
 	drink_desc = "The equivalent of alcohol for synthetic crewmembers. They'd find it awful if they had tastebuds too."
-	taste_message = "motor oil mixed with puke"
+	taste_message = "motor oil"
 
 /datum/reagent/consumable/ethanol/synthanol/on_mob_life(mob/living/M)
 	if(!M.isSynthetic())
@@ -1167,6 +1196,7 @@
 	drink_icon = "robottearsglass"
 	drink_name = "Glass of Robot Tears"
 	drink_desc = "No robots were hurt in the making of this drink."
+	taste_message = "existential angst"
 
 /datum/reagent/consumable/ethanol/synthanol/trinary
 	name = "Trinary"
@@ -1178,6 +1208,7 @@
 	drink_icon = "trinaryglass"
 	drink_name = "Glass of Trinary"
 	drink_desc = "Colorful drink made for synthetic crewmembers. It doesn't seem like it would taste well."
+	taste_message = "modem static"
 
 /datum/reagent/consumable/ethanol/synthanol/servo
 	name = "Servo"
@@ -1189,6 +1220,7 @@
 	drink_icon = "servoglass"
 	drink_name = "Glass of Servo"
 	drink_desc = "Chocolate - based drink made for IPCs. Not sure if anyone's actually tried out the recipe."
+	taste_message = "motor oil and cocoa"
 
 /datum/reagent/consumable/ethanol/synthanol/uplink
 	name = "Uplink"
@@ -1200,6 +1232,7 @@
 	drink_icon = "uplinkglass"
 	drink_name = "Glass of Uplink"
 	drink_desc = "An exquisite mix of the finest liquoirs and synthanol. Meant only for synthetics."
+	taste_message = "a GUI in visual basic"
 
 /datum/reagent/consumable/ethanol/synthanol/synthnsoda
 	name = "Synth 'n Soda"
@@ -1211,6 +1244,7 @@
 	drink_icon = "synthnsodaglass"
 	drink_name = "Glass of Synth 'n Soda"
 	drink_desc = "Classic drink altered to fit the tastes of a robot. Bad idea to drink if you're made of carbon."
+	taste_message = "fizzy motor oil"
 
 /datum/reagent/consumable/ethanol/synthanol/synthignon
 	name = "Synthignon"
@@ -1222,3 +1256,108 @@
 	drink_icon = "synthignonglass"
 	drink_name = "Glass of Synthignon"
 	drink_desc = "Someone mixed good wine and robot booze. Romantic, but atrocious."
+	taste_message = "fancy motor oil"
+
+/datum/reagent/consumable/ethanol/fruit_wine
+	name = "Fruit Wine"
+	id = "fruit_wine"
+	description = "A wine made from grown plants."
+	color = "#FFFFFF"
+	alcohol_perc = 0.35
+	taste_message = "bad coding"
+	can_synth = FALSE
+	var/list/names = list("null fruit" = 1) //Names of the fruits used. Associative list where name is key, value is the percentage of that fruit.
+	var/list/tastes = list("bad coding" = 1) //List of tastes. See above.
+
+/datum/reagent/consumable/ethanol/fruit_wine/on_new(list/data)
+	names = data["names"]
+	tastes = data["tastes"]
+	alcohol_perc = data["alcohol_perc"]
+	color = data["color"]
+	generate_data_info(data)
+
+/datum/reagent/consumable/ethanol/fruit_wine/on_merge(list/data, amount)
+	var/diff = (amount/volume)
+	if(diff < 1)
+		color = BlendRGB(color, data["color"], diff/2) //The percentage difference over two, so that they take average if equal.
+	else
+		color = BlendRGB(color, data["color"], (1/diff)/2) //Adjust so it's always blending properly.
+	var/oldvolume = volume-amount
+
+	var/list/cachednames = data["names"]
+	for(var/name in names | cachednames)
+		names[name] = ((names[name] * oldvolume) + (cachednames[name] * amount)) / volume
+
+	var/list/cachedtastes = data["tastes"]
+	for(var/taste in tastes | cachedtastes)
+		tastes[taste] = ((tastes[taste] * oldvolume) + (cachedtastes[taste] * amount)) / volume
+
+	alcohol_perc *= oldvolume
+	var/newzepwr = data["alcohol_perc"] * amount
+	alcohol_perc += newzepwr
+	alcohol_perc /= volume //Blending alcohol percentage to volume.
+	generate_data_info(data)
+
+/datum/reagent/consumable/ethanol/fruit_wine/proc/generate_data_info(list/data)
+	var/minimum_percent = 0.15 //Percentages measured between 0 and 1.
+	var/list/primary_tastes = list()
+	var/list/secondary_tastes = list()
+	drink_name = "glass of [name]"
+	drink_desc = description
+	for(var/taste in tastes)
+		switch(tastes[taste])
+			if(minimum_percent*2 to INFINITY)
+				primary_tastes += taste
+			if(minimum_percent to minimum_percent*2)
+				secondary_tastes += taste
+
+	var/minimum_name_percent = 0.35
+	name = ""
+	var/list/names_in_order = sortTim(names, /proc/cmp_numeric_dsc, TRUE)
+	var/named = FALSE
+	for(var/fruit_name in names)
+		if(names[fruit_name] >= minimum_name_percent)
+			name += "[fruit_name] "
+			named = TRUE
+	if(named)
+		name += "wine"
+	else
+		name = "mixed [names_in_order[1]] wine"
+
+	var/alcohol_description
+	switch(alcohol_perc)
+		if(1.2 to INFINITY)
+			alcohol_description = "suicidally strong"
+		if(0.9 to 1.2)
+			alcohol_description = "rather strong"
+		if(0.7 to 0.9)
+			alcohol_description = "strong"
+		if(0.4 to 0.7)
+			alcohol_description = "rich"
+		if(0.2 to 0.4)
+			alcohol_description = "mild"
+		if(0 to 0.2)
+			alcohol_description = "sweet"
+		else
+			alcohol_description = "watery" //How the hell did you get negative boozepwr?
+
+	var/list/fruits = list()
+	if(names_in_order.len <= 3)
+		fruits = names_in_order
+	else
+		for(var/i in 1 to 3)
+			fruits += names_in_order[i]
+		fruits += "other plants"
+	var/fruit_list = english_list(fruits)
+	description = "A [alcohol_description] wine brewed from [fruit_list]."
+
+	var/flavor = ""
+	if(!primary_tastes.len)
+		primary_tastes = list("[alcohol_description] alcohol")
+	flavor += english_list(primary_tastes)
+	if(secondary_tastes.len)
+		flavor += ", with a hint of "
+		flavor += english_list(secondary_tastes)
+	taste_message = flavor
+	if(holder.my_atom)
+		holder.my_atom.on_reagent_change()

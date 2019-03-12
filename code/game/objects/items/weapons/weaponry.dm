@@ -12,7 +12,7 @@
 
 
 /obj/item/banhammer/suicide_act(mob/user)
-		to_chat(viewers(user), "<span class='suicide'>[user] is hitting \himself with the [src.name]! It looks like \he's trying to ban \himself from life.</span>")
+		to_chat(viewers(user), "<span class='suicide'>[user] is hitting [user.p_them()]self with the [src.name]! It looks like [user.p_theyre()] trying to ban [user.p_them()]self from life.</span>")
 		return (BRUTELOSS|FIRELOSS|TOXLOSS|OXYLOSS)
 
 /obj/item/sord
@@ -28,7 +28,7 @@
 	attack_verb = list("attacked", "slashed", "stabbed", "sliced", "torn", "ripped", "diced", "cut")
 
 /obj/item/sord/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is trying to impale themself with [src]! It might be a suicide attempt if it weren't so shitty.</span>", \
+	user.visible_message("<span class='suicide'>[user] is trying to impale [user.p_them()]self with [src]! It might be a suicide attempt if it weren't so shitty.</span>", \
 	"<span class='suicide'>You try to impale yourself with [src], but it's USELESS...</span>")
 	return SHAME
 
@@ -48,7 +48,7 @@
 	block_chance = 50
 
 /obj/item/claymore/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is falling on the [src.name]! It looks like \he's trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is falling on the [name]! It looks like [user.p_theyre()] trying to commit suicide.</span>")
 	return(BRUTELOSS)
 
 /obj/item/claymore/ceremonial
@@ -75,7 +75,7 @@
 	slot_flags = null
 
 /obj/item/katana/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is slitting \his stomach open with the [src.name]! It looks like \he's trying to commit seppuku.</span>")
+	user.visible_message("<span class='suicide'>[user] is slitting [user.p_their()] stomach open with [src]! It looks like [user.p_theyre()] trying to commit seppuku.</span>")
 	return(BRUTELOSS)
 
 /obj/item/harpoon
@@ -89,7 +89,7 @@
 	w_class = WEIGHT_CLASS_NORMAL
 	attack_verb = list("jabbed","stabbed","ripped")
 
-obj/item/wirerod
+/obj/item/wirerod
 	name = "Wired rod"
 	desc = "A rod with some wire wrapped around the top. It'd be easy to attach something to the top bit."
 	icon_state = "wiredrod"
@@ -101,7 +101,7 @@ obj/item/wirerod
 	materials = list(MAT_METAL=1150, MAT_GLASS=75)
 	attack_verb = list("hit", "bludgeoned", "whacked", "bonked")
 
-obj/item/wirerod/attackby(obj/item/I, mob/user, params)
+/obj/item/wirerod/attackby(obj/item/I, mob/user, params)
 	..()
 	if(istype(I, /obj/item/shard))
 		var/obj/item/twohanded/spear/S = new /obj/item/twohanded/spear
@@ -179,7 +179,7 @@ obj/item/wirerod/attackby(obj/item/I, mob/user, params)
 		return
 	to_chat(user, "<span class='warning'>You begin gathering strength...</span>")
 	playsound(get_turf(src), 'sound/magic/lightning_chargeup.ogg', 65, 1)
-	if(do_after(user, 90, target = src))
+	if(do_after(user, 90, target = user))
 		to_chat(user, "<span class='userdanger'>You gather power! Time for a home run!</span>")
 		homerun_ready = 1
 	..()
@@ -191,7 +191,7 @@ obj/item/wirerod/attackby(obj/item/I, mob/user, params)
 		user.visible_message("<span class='userdanger'>It's a home run!</span>")
 		target.throw_at(throw_target, rand(8,10), 14, user)
 		target.ex_act(2)
-		playsound(get_turf(src), 'sound/weapons/HOMERUN.ogg', 100, 1)
+		playsound(get_turf(src), 'sound/weapons/homerun.ogg', 100, 1)
 		homerun_ready = 0
 		return
 	else

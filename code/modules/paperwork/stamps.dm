@@ -14,7 +14,7 @@
 	attack_verb = list("stamped")
 
 /obj/item/stamp/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] stamps 'VOID' on \his forehead, then promptly falls over, dead.</span>")
+	user.visible_message("<span class='suicide'>[user] stamps 'VOID' on [user.p_their()] forehead, then promptly falls over, dead.</span>")
 	return (OXYLOSS)
 
 /obj/item/stamp/qm
@@ -72,8 +72,18 @@
 	icon_state = "stamp-clown"
 	item_color = "clown"
 
-/obj/item/stamp/centcom
+/obj/item/stamp/rep
 	name = "Nanotrasen Representative's rubber stamp"
+	icon_state = "stamp-rep"
+	item_color = "rep"
+
+/obj/item/stamp/magistrate
+	name = "Magistrate's rubber stamp"
+	icon_state = "stamp-magistrate"
+	item_color = "rep"
+
+/obj/item/stamp/centcom
+	name = "Central Command rubber stamp"
 	icon_state = "stamp-cent"
 	item_color = "centcom"
 

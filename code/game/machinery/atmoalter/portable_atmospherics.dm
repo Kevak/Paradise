@@ -1,6 +1,6 @@
 /obj/machinery/portable_atmospherics
 	name = "atmoalter"
-	use_power = 0
+	use_power = NO_POWER_USE
 	armor = list(melee = 0, bullet = 0, laser = 0, energy = 100, bomb = 0, bio = 100, rad = 100)
 	var/datum/gas_mixture/air_contents = new
 
@@ -21,7 +21,7 @@
 
 	return 1
 
-/obj/machinery/portable_atmospherics/initialize()
+/obj/machinery/portable_atmospherics/Initialize()
 	. = ..()
 	spawn()
 		var/obj/machinery/atmospherics/unary/portables_connector/port = locate() in loc

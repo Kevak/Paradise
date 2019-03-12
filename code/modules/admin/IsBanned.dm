@@ -9,9 +9,9 @@ world/IsBanned(key,address,computer_id)
 		return list("reason"="invalid login data", "desc"="Error: Could not check ban status, Please try again. Error message: Your computer provided an invalid Computer ID.")
 	var/admin = 0
 	var/ckey = ckey(key)
-	if((ckey in admin_datums) || (ckey in deadmins))
+	if((ckey in admin_datums) || (ckey in GLOB.deadmins))
 		var/datum/admins/A = admin_datums[ckey]
-		if(A.rights & R_ADMIN)
+		if(A && (A.rights & R_ADMIN))
 			admin = 1
 
 	//Guest Checking
@@ -93,7 +93,7 @@ world/IsBanned(key,address,computer_id)
 				var/appealmessage = ""
 				if(config.banappeals)
 					appealmessage = " You may appeal it at <a href='[config.banappeals]'>[config.banappeals]</a>."
-				expires = " The is a permanent ban.[appealmessage]"
+				expires = " This is a permanent ban.[appealmessage]"
 
 			var/desc = "\nReason: You, or another user of this computer or connection ([pckey]) is banned from playing here. The ban reason is:\n[reason]\nThis ban was applied by [ackey] on [bantime].[expires]"
 

@@ -66,7 +66,7 @@
 	desc = "A digitally controlled valve."
 	icon = 'icons/atmos/digital_valve.dmi'
 
-	var/frequency = 1439
+	var/frequency = ATMOS_VENTSCRUB
 	var/id_tag = null
 	var/datum/radio_frequency/radio_connection
 	settagwhitelist = list("id_tag")
@@ -109,7 +109,7 @@
 	if(frequency)
 		radio_connection = radio_controller.add_object(src, frequency, RADIO_ATMOSIA)
 
-/obj/machinery/atmospherics/binary/valve/digital/initialize()
+/obj/machinery/atmospherics/binary/valve/digital/atmos_init()
 	..()
 	if(frequency)
 		set_frequency(frequency)
@@ -149,7 +149,7 @@
 /obj/machinery/atmospherics/binary/valve/digital/multitool_menu(var/mob/user,var/obj/item/multitool/P)
 	return {"
 		<ul>
-			<li><b>Frequency:</b> <a href="?src=[UID()];set_freq=-1">[format_frequency(frequency)] GHz</a> (<a href="?src=[UID()];set_freq=[1439]">Reset</a>)</li>
+			<li><b>Frequency:</b> <a href="?src=[UID()];set_freq=-1">[format_frequency(frequency)] GHz</a> (<a href="?src=[UID()];set_freq=[ATMOS_VENTSCRUB]">Reset</a>)</li>
 			<li>[format_tag("ID Tag","id_tag","set_id")]</a></li>
 		</ul>
 		"}

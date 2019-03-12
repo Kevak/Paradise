@@ -8,7 +8,7 @@
 	to_chat(usr, "<B>You summoned [summon_type ? "magic" : "guns"]!</B>")
 	message_admins("[key_name_admin(usr)] summoned [summon_type ? "magic" : "guns"]!")
 
-	for(var/mob/living/carbon/human/H in player_list)
+	for(var/mob/living/carbon/human/H in GLOB.player_list)
 		if(H.stat == 2 || !(H.client))
 			continue
 		if(H.mind)
@@ -88,8 +88,8 @@
 					new /obj/item/gun/projectile/revolver/grenadelauncher(get_turf(H))
 				if("medibeam")
 					new /obj/item/gun/medbeam(get_turf(H))
-					
-			playsound(get_turf(H), 'sound/magic/Summon_guns.ogg', 50, 1)
+
+			playsound(get_turf(H), 'sound/magic/summon_guns.ogg', 50, 1)
 		else
 			switch(randomizemagic)
 				if("fireball")
@@ -157,5 +157,5 @@
 						if("necromantic")
 							new /obj/item/necromantic_stone(get_turf(H))
 					to_chat(H, "<span class='notice'>You suddenly feel lucky.</span>")
-					
-			playsound(get_turf(H), 'sound/magic/Summon_Magic.ogg', 50, 1)
+
+			playsound(get_turf(H), 'sound/magic/summon_magic.ogg', 50, 1)

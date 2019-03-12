@@ -37,16 +37,8 @@
 	if(gender == NEUTER)
 		gender = pick(MALE, FEMALE)
 
-/mob/living/simple_animal/pet/corgi/Life()
+/mob/living/simple_animal/pet/corgi/Life(seconds, times_fired)
 	. = ..()
-	regenerate_icons()
-
-/mob/living/simple_animal/pet/corgi/death(gibbed)
-	..()
-	regenerate_icons()
-
-/mob/living/simple_animal/pet/corgi/revive()
-	..()
 	regenerate_icons()
 
 /mob/living/simple_animal/pet/corgi/show_inv(mob/user as mob)
@@ -75,10 +67,10 @@
 		//helmet and armor = 100% protection
 		if( istype(inventory_head,/obj/item/clothing/head/helmet) && istype(inventory_back,/obj/item/clothing/suit/armor) )
 			if( O.force )
-				to_chat(user, "<span class='warning'>[src] is wearing too much armor! You can't cause \him any damage.</span>")
+				to_chat(user, "<span class='warning'>[src] is wearing too much armor! You can't cause [p_them()] any damage.</span>")
 				visible_message("<span class='danger'> [user] hits [src] with [O], however [src] is too armored.</span>")
 			else
-				to_chat(user, "<span class='warning'>[src] is wearing too much armor! You can't reach \his skin.<span>")
+				to_chat(user, "<span class='warning'>[src] is wearing too much armor! You can't reach [p_their()] skin.</span>")
 				visible_message("[user] gently taps [src] with [O].")
 			if(health>0 && prob(15))
 				custom_emote(1, "looks at [user] with [pick("an amused","an annoyed","a confused","a resentful", "a happy", "an excited")] expression.")
@@ -169,6 +161,7 @@
 					//The objects that corgis can wear on their backs.
 					var/list/allowed_types = list(
 						/obj/item/clothing/suit/armor/vest,
+						/obj/item/clothing/suit/armor/vest/blueshield,
 						/obj/item/clothing/suit/space/deathsquad,
 						/obj/item/clothing/suit/space/hardsuit/engineering,
 						/obj/item/radio,
@@ -180,7 +173,7 @@
 					)
 
 					if( ! ( item_to_add.type in allowed_types ) )
-						to_chat(usr, "<span class='warning'>You set [item_to_add] on [src]'s back, but \he shakes it off!</span>")
+						to_chat(usr, "<span class='warning'>You set [item_to_add] on [src]'s back, but [p_they()] shake[p_s()] it off!</span>")
 						if(!usr.drop_item())
 							to_chat(usr, "<span class='warning'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s back!</span>")
 							return
@@ -373,16 +366,22 @@
 				name = "Definitely Not [real_name]"
 				desc = "That's Definitely Not [real_name]"
 				valid = 1
+			
+			if(/obj/item/clothing/head/beret/centcom/officer, /obj/item/clothing/head/beret/centcom/officer/navy)
+				name = "Blueshield [real_name]"
+				desc = "Will stand by you until the bitter end."
+				emote_see = list("stands with pride.", "growls heroically.")
+				valid = 1
 
 	if(valid)
 		if(user && !user.drop_item())
 			to_chat(user, "<span class='warning'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s head!</span>")
 			return 0
 		if(health <= 0)
-			to_chat(user, "<span class ='notice'>There is merely a dull, lifeless look in [real_name]'s eyes as you put the [item_to_add] on \him.</span>")
+			to_chat(user, "<span class ='notice'>There is merely a dull, lifeless look in [real_name]'s eyes as you put the [item_to_add] on [p_them()].</span>")
 		else if(user)
 			user.visible_message("[user] puts [item_to_add] on [real_name]'s head.  [src] looks at [user] and barks once.",
-				"<span class='notice'>You put [item_to_add] on [real_name]'s head.  [src] gives you a peculiar look, then wags \his tail once and barks.</span>",
+				"<span class='notice'>You put [item_to_add] on [real_name]'s head.  [src] gives you a peculiar look, then wags [p_their()] tail once and barks.</span>",
 				"<span class='italics'>You hear a friendly-sounding bark.</span>")
 		item_to_add.loc = src
 		src.inventory_head = item_to_add
@@ -392,7 +391,7 @@
 		if(user && !user.drop_item())
 			to_chat(user, "<span class='warning'>\The [item_to_add] is stuck to your hand, you cannot put it on [src]'s head!</span>")
 			return 0
-		to_chat(user, "<span class='warning'>You set [item_to_add] on [src]'s head, but \he shakes it off!</span>")
+		to_chat(user, "<span class='warning'>You set [item_to_add] on [src]'s head, but [p_they()] shake[p_s()] it off!</span>")
 		item_to_add.loc = loc
 		if(prob(25))
 			step_rand(item_to_add)
@@ -612,7 +611,7 @@
 	A.fire()
 	return
 
-/mob/living/simple_animal/pet/corgi/Ian/borgi/Life()
+/mob/living/simple_animal/pet/corgi/Ian/borgi/Life(seconds, times_fired)
 	..()
 	if(emagged && prob(25))
 		var/mob/living/carbon/target = locate() in view(10,src)
@@ -621,12 +620,11 @@
 
 	//spark for no reason
 	if(prob(5))
-		var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-		s.set_up(3, 1, src)
-		s.start()
+		do_sparks(3, 1, src)
 
 /mob/living/simple_animal/pet/corgi/Ian/borgi/death(gibbed)
-	var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-	s.set_up(3, 1, src)
-	s.start()
-	..()
+	// Only execute the below if we successfully died
+	. = ..(gibbed)
+	if(!.)
+		return FALSE
+	do_sparks(3, 1, src)

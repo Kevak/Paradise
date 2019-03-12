@@ -103,6 +103,27 @@ function linkify(text) {
 	});
 }
 
+function byondDecode(message) {
+	// Basically we url_encode twice server side so we can manually read the encoded version and actually do UTF-8.
+	// The replace for + is because FOR SOME REASON, BYOND replaces spaces with a + instead of %20, and a plus with %2b.
+	// Marvelous.
+	message = message.replace(/\+/g, "%20");
+	try { 
+		// This is a workaround for the above not always working when BYOND's shitty url encoding breaks.
+		// Basically, sometimes BYOND's double encoding trick just arbitrarily produces something that makes decodeURIComponent
+		// throw an "Invalid Encoding URI" URIError... the simplest way to work around this is to just ignore it and use unescape instead
+		// which just fails to decode shit instead of throwing errors
+		if (decodeURIComponent) {
+			message = decodeURIComponent(message);
+		} else {
+			throw new Error("Easiest way to trigger the fallback")
+		}
+	} catch (err) {
+		message = unescape(message);
+	}
+	return message;
+}
+
 function emojiparse(el) {
 
 	if ((typeof UNICODE_9_EMOJI === 'undefined') || (typeof twemoji === 'undefined')) {
@@ -159,11 +180,7 @@ function output(message, flag) {
 	if (flag !== 'internal')
 		opts.lastPang = Date.now();
 
-	// Basically we url_encode twice server side so we can manually read the encoded version and actually do UTF-8.
-	// The replace for + is because FOR SOME REASON, BYOND replaces spaces with a + instead of %20, and a plus with %2b.
-	// Marvelous.
-	message = message.replace(/\+/g, "%20");
-	message = decoder(message);
+	message = byondDecode(message).trim();
 
 	//The behemoth of filter-code (for Admin message filters)
 	//Note: This is proooobably hella inefficient
@@ -319,7 +336,7 @@ function setCookie(cname, cvalue, exdays) {
 	var d = new Date();
 	d.setTime(d.getTime() + (exdays*24*60*60*1000));
 	var expires = 'expires='+d.toUTCString();
-	document.cookie = "paradise-" + cname + '=' + cvalue + '; ' + expires;
+	document.cookie = "paradise-" + cname + '=' + cvalue + '; ' + expires + '; path=/';
 }
 
 function getCookie(cname) {
@@ -556,8 +573,9 @@ $(function() {
 		'shighlightTerms': getCookie('highlightterms'),
 		'shighlightColor': getCookie('highlightcolor'),
 		'shideSpam': getCookie('hidespam'),
+		'darkChat': getCookie('darkChat'),
 	};
-
+	
 	if (savedConfig.sfontSize) {
 		$messages.css('font-size', savedConfig.sfontSize);
 		internalOutput('<span class="internal boldnshit">Loaded font size setting of: '+savedConfig.sfontSize+'</span>', 'internal');
@@ -595,7 +613,28 @@ $(function() {
 		opts.hideSpam = $.parseJSON(savedConfig.shideSpam);
 		internalOutput('<span class="internal boldnshit">Loaded hide spam preference of: ' + savedConfig.shideSpam + '</span>', 'internal');
 	}
-
+	if (savedConfig.darkChat == "on") {
+		   $("head").append("<link>");
+		   var css = $("head").children(":last");
+		   css.attr({
+		     rel:  "stylesheet",
+		     type: "text/css",
+		     href: "./browserOutput-dark.css"
+		  });
+	} else {
+		   $("head").append("<link>");
+		   var css = $("head").children(":last");
+		   css.attr({
+		     rel:  "stylesheet",
+		     type: "text/css",
+		     href: "./browserOutput.css"
+		  });
+	}
+	if(localStorage){
+		var backlog = localStorage.getItem('backlog')
+		$messages.html(backlog)
+		localStorage.setItem('backlog', '')
+	}
 	(function() {
 		var dataCookie = getCookie('connData');
 		if (dataCookie) {
@@ -993,6 +1032,18 @@ $(function() {
 		opts.messageCount = 0;
 		opts.previousMessage = '';
 		opts.previousMessageCount = 1;
+	});
+
+	$('#toggleDarkChat').click(function(e) {
+		internalOutput('<span class="internal boldnshit">Dark Chat toggled. Reconnecting to chat.</span>', 'internal');
+		var backlog = $messages.html()
+		if(getCookie('darkChat') == "on"){
+			setCookie('darkChat', "off", 365)
+		} else {
+			setCookie('darkChat', "on", 365)
+		}
+		localStorage.setItem('backlog', backlog)
+		location.reload();
 	});
 
 	// Tell BYOND to give us a macro list.

@@ -39,7 +39,7 @@
 
 /obj/machinery/syndicatebomb/process()
 	if(!active)
-		fast_processing -= src
+		GLOB.fast_processing -= src
 		detonation_timer = null
 		next_beep = null
 		countdown.stop()
@@ -73,7 +73,7 @@
 		if(defused && payload in src)
 			payload.defuse()
 			countdown.stop()
-			fast_processing -= src
+			GLOB.fast_processing -= src
 
 /obj/machinery/syndicatebomb/New()
 	wires 	= new(src)
@@ -86,7 +86,7 @@
 /obj/machinery/syndicatebomb/Destroy()
 	QDEL_NULL(wires)
 	QDEL_NULL(countdown)
-	fast_processing -= src
+	GLOB.fast_processing -= src
 	return ..()
 
 /obj/machinery/syndicatebomb/examine(mob/user)
@@ -167,7 +167,7 @@
 			if(!WT.isOn() || !WT.remove_fuel(5, user))
 				return
 			to_chat(user, "<span class='notice'>You cut the [src] apart.</span>")
-			new /obj/item/stack/sheet/plasteel(loc, 5)
+			new /obj/item/stack/sheet/plasteel(loc, 3)
 			qdel(src)
 	else
 		return ..()
@@ -205,7 +205,7 @@
 
 /obj/machinery/syndicatebomb/proc/activate()
 	active = TRUE
-	fast_processing += src
+	GLOB.fast_processing += src
 	countdown.start()
 	next_beep = world.time + 10
 	detonation_timer = world.time + (timer_set * 10)
@@ -230,8 +230,9 @@
 			var/turf/bombturf = get_turf(src)
 			var/area/A = get_area(bombturf)
 			if(payload && !istype(payload, /obj/item/bombcore/training))
-				msg_admin_attack("[key_name_admin(user)] has primed a [name] ([payload]) for detonation at <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[bombturf.x];Y=[bombturf.y];Z=[bombturf.z]'>[A.name] (JMP)</a>.")
-				log_game("[key_name(user)] has primed a [name] ([payload]) for detonation at [A.name] ([bombturf.x], [bombturf.y], [bombturf.z])")
+				msg_admin_attack("[key_name_admin(user)] has primed a [name] ([payload]) for detonation at <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[bombturf.x];Y=[bombturf.y];Z=[bombturf.z]'>[A.name] (JMP)</a>.", ATKLOG_FEW)
+				log_game("[key_name(user)] has primed a [name] ([payload]) for detonation at [A.name] [COORD(bombturf)]")
+				investigate_log("[key_name(user)] has has primed a [name] ([payload]) for detonation at [A.name] [COORD(bombturf)]", INVESTIGATE_BOMB)
 				payload.adminlog = "\The [src] that [key_name(user)] had primed detonated!"
 
 /obj/machinery/syndicatebomb/proc/isWireCut(var/index)
@@ -438,7 +439,7 @@
 		chem_splash(get_turf(src), spread_range, list(reactants), temp_boost)
 
 		// Detonate it again in one second, until it's out of juice.
-		addtimer(src, "detonate", 10)
+		addtimer(CALLBACK(src, .proc/detonate), 10)
 
 	// If it's not a time release bomb, do normal explosion
 
@@ -456,7 +457,7 @@
 				reactants += S.reagents
 
 	if(!chem_splash(get_turf(src), spread_range, reactants, temp_boost))
-		playsound(loc, 'sound/items/Screwdriver2.ogg', 50, 1)
+		playsound(loc, 'sound/items/screwdriver2.ogg', 50, 1)
 		return // The Explosion didn't do anything. No need to log, or disappear.
 
 	if(adminlog)
@@ -486,7 +487,8 @@
 		else
 			to_chat(user, "<span class='warning'>The [I] wont fit! The [src] can only hold up to [max_beakers] containers.</span>")
 			return
-	..()
+	else
+		return ..()
 
 /obj/item/bombcore/chemical/CheckParts(list/parts_list)
 	..()
@@ -528,6 +530,48 @@
 
 		qdel(G)
 
+/obj/item/bombcore/toxins
+	name = "toxins payload"
+	desc = "A payload casing designed to secure a gas based bomb. Must be loaded with a tank transfer valve and installed into a plasteel bomb frame in order to be detonated."
+	origin_tech = "materials=1;engineering=1"
+	icon_state = "chemcore"
+	var/obj/item/transfer_valve/ttv = null
+
+/obj/item/bombcore/toxins/attackby(obj/item/I, mob/user)
+	if(iscrowbar(I) && ttv)
+		playsound(loc, I.usesound, 50, 1)
+		ttv.forceMove(get_turf(src))
+		ttv = null
+	else if(istype(I, /obj/item/transfer_valve))
+		if(!ttv && !check_attached(I))
+			if(!user.drop_item())
+				return
+			to_chat(user, "<span class='notice'>You load [src] with [I].</span>")
+			ttv = I
+			I.forceMove(src)
+		else if (ttv)
+			to_chat(user, "<span class='warning'>Another tank transfer valve is already loaded.</span>")
+		else
+			to_chat(user, "<span class='warning'>Remove the attached assembly component first.</span>")
+	else
+		return ..()
+
+/obj/item/bombcore/toxins/proc/check_attached(obj/item/transfer_valve/ttv)
+	if (ttv.attached_device)
+		return TRUE
+	else
+		return FALSE
+
+/obj/item/bombcore/toxins/ex_act(severity) //No chain reactions, the explosion only occurs when gas mixes
+	return
+
+/obj/item/bombcore/toxins/burn()
+	return
+
+/obj/item/bombcore/toxins/detonate()
+	if(ttv)
+		ttv.toggle_valve()
+
 ///Syndicate Detonator (aka the big red button)///
 
 /obj/item/syndicatedetonator
@@ -544,7 +588,7 @@
 
 /obj/item/syndicatedetonator/attack_self(mob/user)
 	if(timer < world.time)
-		for(var/obj/machinery/syndicatebomb/B in machines)
+		for(var/obj/machinery/syndicatebomb/B in GLOB.machines)
 			if(B.active)
 				B.detonation_timer = world.time + BUTTON_DELAY
 				detonated++
@@ -556,7 +600,7 @@
 			var/area/A = get_area(T)
 			detonated--
 			message_admins("[key_name_admin(user)] has remotely detonated [detonated ? "syndicate bombs" : "a syndicate bomb"] using a [name] at <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[T.x];Y=[T.y];Z=[T.z]'>[A.name] (JMP)</a>.")
-			bombers += "[key_name(user)] has remotely detonated [detonated ? "syndicate bombs" : "a syndicate bomb"] using a [name] at [A.name] ([T.x],[T.y],[T.z])"
+			investigate_log("[key_name(user)] has remotely detonated [detonated ? "syndicate bombs" : "a syndicate bomb"] using a [name] at [A.name] ([T.x],[T.y],[T.z])", INVESTIGATE_BOMB)
 			log_game("[key_name(user)] has remotely detonated [detonated ? "syndicate bombs" : "a syndicate bomb"] using a [name] at [A.name] ([T.x],[T.y],[T.z])")
 		detonated =	0
 		existant =	0

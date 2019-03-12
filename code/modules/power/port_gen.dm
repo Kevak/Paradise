@@ -6,7 +6,7 @@
 	icon_state = "portgen0_0"
 	density = 1
 	anchored = 0
-	use_power = 0
+	use_power = NO_POWER_USE
 
 	var/active = 0
 	var/power_gen = 5000
@@ -112,7 +112,7 @@
 	var/temperature = 0		//The current temperature
 	var/overheating = 0		//if this gets high enough the generator explodes
 
-/obj/machinery/power/port_gen/pacman/initialize()
+/obj/machinery/power/port_gen/pacman/Initialize()
 	..()
 	if(anchored)
 		connect_to_network()

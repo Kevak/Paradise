@@ -65,8 +65,8 @@
 	if(istype(A) && A.checkpass(PASSGLASS))
 		return prob(60)
 
-	var/obj/structure/stool/bed/B = A
-	if(istype(A, /obj/structure/stool/bed) && B.buckled_mob)//if it's a bed/chair and someone is buckled, it will not pass
+	var/obj/structure/bed/B = A
+	if(istype(A, /obj/structure/bed) && B.buckled_mob)//if it's a bed/chair and someone is buckled, it will not pass
 		return 0
 
 	if(istype(A, /obj/structure/closet/cardboard))
@@ -86,7 +86,7 @@
 				return ..()
 		if(istype(A, /mob/living/carbon/human))
 			var/mob/living/carbon/human/H = M
-			if(H.species.is_small)
+			if(H.dna.species.is_small)
 				return ..()
 		return 0
 
@@ -124,7 +124,7 @@
 	name = "airtight plastic flaps"
 	desc = "Heavy duty, airtight, plastic flaps."
 
-/obj/structure/plasticflaps/mining/initialize()
+/obj/structure/plasticflaps/mining/Initialize()
 	air_update_turf(1)
 	..()
 

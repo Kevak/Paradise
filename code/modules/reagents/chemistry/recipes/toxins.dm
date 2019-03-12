@@ -144,9 +144,7 @@
 
 /datum/chemical_reaction/teslium/on_reaction(datum/reagents/holder, created_volume)
 	var/location = get_turf(holder.my_atom)
-	var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-	s.set_up(6, 1, location)
-	s.start()
+	do_sparks(6, 1, location)
 
 /datum/chemical_reaction/mutagen
 	name = "Unstable mutagen"
@@ -155,6 +153,19 @@
 	required_reagents = list("radium" = 1, "plasma" = 1, "chlorine" = 1)
 	result_amount = 3
 	mix_message = "The substance turns neon green and bubbles unnervingly."
+
+/datum/chemical_reaction/stable_mustagen
+	name = "Stable mutagen"
+	id = "stable_mutagen"
+	result = "stable_mutagen"
+	required_reagents = list("mutagen" = 1, "lithium" = 1, "acetone" = 1, "bromine" = 1)
+	result_amount = 3
+	mix_message = "The substance turns a drab green and begins to bubble."
+
+/datum/chemical_reaction/stable_mustagen/stable_mustagen2
+	id = "stable_mutagen2"
+	required_reagents = list("mutadone" = 3, "lithium" = 1)
+	result_amount = 4
 
 /datum/chemical_reaction/heparin
 	name = "Heparin"

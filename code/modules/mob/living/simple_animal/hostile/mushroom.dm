@@ -22,7 +22,7 @@
 	faction = list("mushroom")
 	environment_smash = 0
 	stat_attack = 2
-	mouse_opacity = 1
+	mouse_opacity = MOUSE_OPACITY_ICON
 	speed = 1
 	ventcrawler = 2
 	robust_searching = 1
@@ -42,7 +42,7 @@
 	else
 		to_chat(user, "<span class='info'>It looks like it's been roughed up.</span>")
 
-/mob/living/simple_animal/hostile/mushroom/Life()
+/mob/living/simple_animal/hostile/mushroom/Life(seconds, times_fired)
 	..()
 	if(!stat)//Mushrooms slowly regenerate if conscious, for people who want to save them from being eaten
 		adjustBruteLoss(-2)
@@ -91,7 +91,10 @@
 	UpdateMushroomCap()
 
 /mob/living/simple_animal/hostile/mushroom/death(gibbed)
-	..()
+	// Only execute the below if we successfully died
+	. = ..(gibbed)
+	if(!.)
+		return FALSE
 	UpdateMushroomCap()
 
 /mob/living/simple_animal/hostile/mushroom/proc/UpdateMushroomCap()

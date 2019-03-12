@@ -1,3 +1,5 @@
+#define HEALPERWELD 15
+
 /* Tools!
  * Note: Multitools are in devices
  *
@@ -20,7 +22,7 @@
 	slot_flags = SLOT_BELT
 	force = 5
 	throwforce = 7
-	usesound = 'sound/items/Ratchet.ogg'
+	usesound = 'sound/items/ratchet.ogg'
 	w_class = WEIGHT_CLASS_SMALL
 	materials = list(MAT_METAL=150)
 	origin_tech = "materials=1;engineering=1"
@@ -28,7 +30,7 @@
 	toolspeed = 1
 
 /obj/item/wrench/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is beating themselves to death with [src]! It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is beating [user.p_them()]self to death with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	playsound(loc, 'sound/weapons/genhit.ogg', 50, 1, -1)
 	return (BRUTELOSS)
 
@@ -48,7 +50,7 @@
 	desc = "A polarized wrench. It causes anything placed between the jaws to turn."
 	icon = 'icons/obj/abductor.dmi'
 	icon_state = "wrench"
-	usesound = 'sound/effects/EMPulse.ogg'
+	usesound = 'sound/effects/empulse.ogg'
 	toolspeed = 0.1
 	origin_tech = "materials=5;engineering=5;abductor=3"
 
@@ -73,7 +75,7 @@
 	user.put_in_active_hand(s_drill)
 
 /obj/item/wrench/power/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is pressing [src] against their head! It looks like they're trying to commit suicide!")
+	user.visible_message("<span class='suicide'>[user] is pressing [src] against [user.p_their()] head! It looks like [user.p_theyre()] trying to commit suicide!")
 	return (BRUTELOSS)
 
 /obj/item/wrench/medical
@@ -86,7 +88,7 @@
 	attack_verb = list("wrenched", "medicaled", "tapped", "jabbed", "whacked")
 
 /obj/item/wrench/medical/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is praying to the medical wrench to take their soul. It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is praying to the medical wrench to take [user.p_their()] soul. It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	// TODO Make them glow with the power of the M E D I C A L W R E N C H
 	// during their ascension
 
@@ -118,7 +120,7 @@
 	name = "screwdriver"
 	desc = "You can be totally screwy with this."
 	icon = 'icons/obj/tools.dmi'
-	icon_state = null
+	icon_state = "screwdriver_map"
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	force = 5
@@ -129,8 +131,9 @@
 	materials = list(MAT_METAL=75)
 	attack_verb = list("stabbed")
 	hitsound = 'sound/weapons/bladeslice.ogg'
-	usesound = 'sound/items/Screwdriver.ogg'
+	usesound = 'sound/items/screwdriver.ogg'
 	toolspeed = 1
+	var/random_color = TRUE //if the screwdriver uses random coloring
 
 /obj/item/screwdriver/nuke
 	name = "screwdriver"
@@ -139,12 +142,12 @@
 	toolspeed = 0.5
 
 /obj/item/screwdriver/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is stabbing [src] into their [pick("temple", "heart")]! It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is stabbing [src] into [user.p_their()] [pick("temple", "heart")]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	return(BRUTELOSS)
 
 /obj/item/screwdriver/New(loc, var/param_color = null)
 	..()
-	if(!icon_state)
+	if(random_color)
 		if(!param_color)
 			param_color = pick("red","blue","pink","brown","green","cyan","yellow")
 		icon_state = "screwdriver_[param_color]"
@@ -166,14 +169,16 @@
 	desc = "A screwdriver made of brass. The handle feels freezing cold."
 	icon_state = "screwdriver_brass"
 	toolspeed = 0.5
+	random_color = FALSE
 
 /obj/item/screwdriver/abductor
 	name = "alien screwdriver"
 	desc = "An ultrasonic screwdriver."
 	icon = 'icons/obj/abductor.dmi'
 	icon_state = "screwdriver"
-	usesound = 'sound/items/PSHOOM.ogg'
+	usesound = 'sound/items/pshoom.ogg'
 	toolspeed = 0.1
+	random_color = FALSE
 
 /obj/item/screwdriver/power
 	name = "hand drill"
@@ -190,9 +195,10 @@
 	hitsound = 'sound/items/drill_hit.ogg'
 	usesound = 'sound/items/drill_use.ogg'
 	toolspeed = 0.25
+	random_color = FALSE
 
 /obj/item/screwdriver/power/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is putting [src] to their temple. It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is putting [src] to [user.p_their()] temple. It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	return(BRUTELOSS)
 
 /obj/item/screwdriver/power/attack_self(mob/user)
@@ -213,7 +219,7 @@
 	name = "wirecutters"
 	desc = "This cuts wires."
 	icon = 'icons/obj/tools.dmi'
-	icon_state = null
+	icon_state = "cutters"
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	force = 6
@@ -223,14 +229,15 @@
 	materials = list(MAT_METAL=80)
 	origin_tech = "materials=1;engineering=1"
 	attack_verb = list("pinched", "nipped")
-	hitsound = 'sound/items/Wirecutter.ogg'
-	usesound = 'sound/items/Wirecutter.ogg'
+	hitsound = 'sound/items/wirecutter.ogg'
+	usesound = 'sound/items/wirecutter.ogg'
 	sharp = 1
 	toolspeed = 1
+	var/random_color = TRUE
 
 /obj/item/wirecutters/New(loc, param_color = null)
 	..()
-	if(!icon_state)
+	if(random_color)
 		if(!param_color)
 			param_color = pick("yellow", "red")
 		icon_state = "cutters_[param_color]"
@@ -247,7 +254,7 @@
 		..()
 
 /obj/item/wirecutters/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is cutting at their arteries with [src]! It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is cutting at [user.p_their()] arteries with [src]! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	playsound(loc, usesound, 50, 1, -1)
 	return (BRUTELOSS)
 
@@ -256,6 +263,7 @@
 	desc = "A pair of wirecutters made of brass. The handle feels freezing cold to the touch."
 	icon_state = "cutters_brass"
 	toolspeed = 0.5
+	random_color = FALSE
 
 /obj/item/wirecutters/abductor
 	name = "alien wirecutters"
@@ -264,6 +272,7 @@
 	icon_state = "cutters"
 	toolspeed = 0.1
 	origin_tech = "materials=5;engineering=4;abductor=3"
+	random_color = FALSE
 
 /obj/item/wirecutters/cyborg
 	name = "wirecutters"
@@ -279,9 +288,10 @@
 	materials = list(MAT_METAL=150,MAT_SILVER=50,MAT_TITANIUM=25)
 	usesound = 'sound/items/jaws_cut.ogg'
 	toolspeed = 0.25
+	random_color = FALSE
 
 /obj/item/wirecutters/power/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is wrapping \the [src] around their neck. It looks like they're trying to rip their head off!</span>")
+	user.visible_message("<span class='suicide'>[user] is wrapping \the [src] around [user.p_their()] neck. It looks like [user.p_theyre()] trying to rip [user.p_their()] head off!</span>")
 	playsound(loc, 'sound/items/jaws_cut.ogg', 50, 1, -1)
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
@@ -312,9 +322,9 @@
 	throw_speed = 3
 	throw_range = 5
 	hitsound = "swing_hit"
-	usesound = 'sound/items/Welder.ogg'
-	var/acti_sound = 'sound/items/WelderActivate.ogg'
-	var/deac_sound = 'sound/items/WelderDeactivate.ogg'
+	usesound = 'sound/items/welder.ogg'
+	var/acti_sound = 'sound/items/welderactivate.ogg'
+	var/deac_sound = 'sound/items/welderdeactivate.ogg'
 	w_class = WEIGHT_CLASS_SMALL
 	materials = list(MAT_METAL=70, MAT_GLASS=30)
 	origin_tech = "engineering=1;plasmatech=1"
@@ -338,7 +348,7 @@
 		to_chat(user, "It contains [get_fuel()] unit\s of fuel out of [max_fuel].")
 
 /obj/item/weldingtool/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] welds their every orifice closed! It looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] welds [user.p_their()] every orifice closed! It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	return (FIRELOSS)
 
 /obj/item/weldingtool/proc/update_torch()
@@ -358,6 +368,7 @@
 		else
 			icon_state = "[initial(icon_state)][ratio]"
 	update_torch()
+	..()
 
 /obj/item/weldingtool/process()
 	switch(welding)
@@ -397,34 +408,61 @@
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
 		var/obj/item/organ/external/S = H.bodyparts_by_name[user.zone_sel.selecting]
+
 		if(!S)
 			return
 
-		if(!(S.status & ORGAN_ROBOT) || user.a_intent != INTENT_HELP || S.open == 2)
+		if(!S.is_robotic() || user.a_intent != INTENT_HELP || S.open == 2)
 			return ..()
 
 		if(!isOn())		//why wasn't this being checked already?
 			to_chat(user, "<span class='warning'>Turn on [src] before attempting repairs!</span>")
 			return 1
 
-		if(S.brute_dam)
-			if(S.brute_dam < ROBOLIMB_SELF_REPAIR_CAP)
-				if(get_fuel() >= 1)
-					if(H == user)
-						if(!do_mob(user, H, 10))
-							return 1
-					if(remove_fuel(1,null))
-						playsound(src.loc, usesound, 50, 1)
-						S.heal_damage(15,0,0,1)
-						user.visible_message("<span class='alert'>\The [user] patches some dents on \the [M]'s [S.name] with \the [src].</span>")
-				else if(S.open != 2)
-					to_chat(user, "<span class='warning'>Need more welding fuel!</span>")
-					return 1
-			else
-				to_chat(user, "<span class='danger'>The damage is far too severe to patch over externally.</span>")
-			return 1
-		else if(S.open != 2)
+		if(S.brute_dam > ROBOLIMB_SELF_REPAIR_CAP)
+			to_chat(user, "<span class='danger'>The damage is far too severe to patch over externally.</span>")
+			return
+
+		if(!S.brute_dam)
 			to_chat(user, "<span class='notice'>Nothing to fix!</span>")
+			return
+
+		if(get_fuel() >= 1)
+			if(H == user)
+				if(!do_mob(user, H, 10))
+					return 1
+			if(!remove_fuel(1,null))
+				to_chat(user, "<span class='warning'>Need more welding fuel!</span>")
+			var/rembrute = HEALPERWELD
+			var/nrembrute = 0
+			var/childlist
+			if(!isnull(S.children))
+				childlist = S.children.Copy()
+			var/parenthealed = FALSE
+			while(rembrute > 0)
+				var/obj/item/organ/external/E
+				if(S.brute_dam)
+					E = S
+				else if(LAZYLEN(childlist))
+					E = pick_n_take(childlist)
+					if(!E.brute_dam || !E.is_robotic())
+						continue
+				else if(S.parent && !parenthealed)
+					E = S.parent
+					parenthealed = TRUE
+					if(!E.brute_dam || !E.is_robotic())
+						break
+				else
+					break
+				playsound(src.loc, usesound, 50, 1)
+				nrembrute = max(rembrute - E.brute_dam, 0)
+				E.heal_damage(rembrute,0,0,1)
+				rembrute = nrembrute
+				user.visible_message("<span class='alert'>\The [user] patches some dents on \the [M]'s [E.name] with \the [src].</span>")
+			if(H.bleed_rate && H.isSynthetic())
+				H.bleed_rate = 0
+				user.visible_message("<span class='alert'>\The [user] patches some leaks on [M] with \the [src].</span>")
+			return 1
 	else
 		return ..()
 
@@ -634,7 +672,7 @@ obj/item/weldingtool/experimental/process()
 	icon = 'icons/obj/tools.dmi'
 	icon_state = "crowbar"
 	item_state = "crowbar"
-	usesound = 'sound/items/Crowbar.ogg'
+	usesound = 'sound/items/crowbar.ogg'
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
 	force = 5
@@ -699,7 +737,7 @@ obj/item/weldingtool/experimental/process()
 	var/airlock_open_time = 100 // Time required to open powered airlocks
 
 /obj/item/crowbar/power/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is putting their head in [src], it looks like they're trying to commit suicide!</span>")
+	user.visible_message("<span class='suicide'>[user] is putting [user.p_their()] head in [src]. It looks like [user.p_theyre()] trying to commit suicide!</span>")
 	playsound(loc, 'sound/items/jaws_pry.ogg', 50, 1, -1)
 	return (BRUTELOSS)
 

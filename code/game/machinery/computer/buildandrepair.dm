@@ -4,9 +4,29 @@
 	name = "computer frame"
 	icon = 'icons/obj/stock_parts.dmi'
 	icon_state = "0"
+	max_integrity = 100
 	var/state = 0
 	var/obj/item/circuitboard/circuit = null
+	var/base_mineral = /obj/item/stack/sheet/metal
 //	weight = 1.0E8
+
+/obj/structure/computerframe/deconstruct(disassembled = TRUE)
+	drop_computer_parts()
+	return ..() // will qdel the frame
+
+/obj/structure/computerframe/obj_break(damage_flag)
+	deconstruct()
+
+/obj/structure/computerframe/proc/drop_computer_parts()
+	new base_mineral(loc, 5)
+	if(circuit)
+		circuit.forceMove(loc)
+		circuit = null
+	if(state >= 3)
+		var/obj/item/stack/cable_coil/A = new /obj/item/stack/cable_coil( loc )
+		A.amount = 5
+	if(state >= 4)
+		new /obj/item/stack/sheet/glass(loc, 2)
 
 /obj/item/circuitboard
 	density = 0
@@ -28,7 +48,7 @@
 	var/frame_desc = null
 	var/contain_parts = 1
 	toolspeed = 1
-	usesound = 'sound/items/Deconstruct.ogg'
+	usesound = 'sound/items/deconstruct.ogg'
 
 /obj/item/circuitboard/computer
 	board_type = "computer"
@@ -296,6 +316,18 @@
 /obj/item/circuitboard/white_ship
 	name = "circuit Board (White Ship)"
 	build_path = /obj/machinery/computer/shuttle/white_ship
+/obj/item/circuitboard/golem_ship
+	name = "circuit Board (Golem Ship)"
+	build_path = /obj/machinery/computer/shuttle/golem_ship
+/obj/item/circuitboard/shuttle/syndicate
+	name = "circuit board (Syndicate Shuttle)"
+	build_path = /obj/machinery/computer/shuttle/syndicate
+/obj/item/circuitboard/shuttle/syndicate/recall
+	name = "circuit board (Syndicate Shuttle Recall Terminal)"
+	build_path = /obj/machinery/computer/shuttle/syndicate/recall
+/obj/item/circuitboard/shuttle/syndicate/drop_pod
+	name = "circuit board (Syndicate Drop Pod)"
+	build_path = /obj/machinery/computer/shuttle/syndicate/drop_pod
 
 
 /obj/item/circuitboard/HolodeckControl
@@ -362,7 +394,7 @@
 /obj/item/circuitboard/rdconsole/attackby(obj/item/I as obj, mob/user as mob, params)
 	if(istype(I,/obj/item/card/id)||istype(I, /obj/item/pda))
 		if(allowed(user))
-			user.visible_message("<span class='notice'>\the [user] waves their ID past the [src]'s access protocol scanner.</span>", "<span class='notice'>You swipe your ID past the [src]'s access protocol scanner.</span>")
+			user.visible_message("<span class='notice'>\the [user] waves [user.p_their()] ID past the [src]'s access protocol scanner.</span>", "<span class='notice'>You swipe your ID past the [src]'s access protocol scanner.</span>")
 			var/console_choice = input(user, "What do you want to configure the access to?", "Access Modification", "R&D Core") as null|anything in access_types
 			if(console_choice == null)
 				return
@@ -411,8 +443,7 @@
 				if(do_after(user, 20 * WT.toolspeed, target = src))
 					if(!src || !WT.isOn()) return
 					to_chat(user, "<span class='notice'>You deconstruct the frame.</span>")
-					new /obj/item/stack/sheet/metal(loc, 5)
-					qdel(src)
+					deconstruct(TRUE)
 		if(1)
 			if(istype(P, /obj/item/wrench))
 				playsound(loc, P.usesound, 50, 1)
@@ -516,6 +547,7 @@
 /obj/structure/computerframe/HONKputer
 	name = "Bananium Computer-frame"
 	icon = 'icons/obj/machines/HONKputer.dmi'
+	base_mineral = /obj/item/stack/sheet/mineral/bananium
 
 /obj/structure/computerframe/HONKputer/attackby(obj/item/P as obj, mob/user as mob, params)
 	switch(state)
@@ -535,8 +567,7 @@
 				if(do_after(user, 20 * WT.toolspeed, target = src))
 					if(!src || !WT.isOn()) return
 					to_chat(user, "<span class='notice'>You deconstruct the frame.</span>")
-					new /obj/item/stack/sheet/mineral/bananium(loc, 5)
-					qdel(src)
+					deconstruct(TRUE)
 		if(1)
 			if(istype(P, /obj/item/wrench))
 				playsound(loc, P.usesound, 50, 1)

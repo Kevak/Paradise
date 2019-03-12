@@ -22,6 +22,7 @@
 	var/log_hrefs = 0					// logs all links clicked in-game. Could be used for debugging and tracking down exploits
 	var/sql_enabled = 0					// for sql switching
 	var/allow_admin_ooccolor = 0		// Allows admins with relevant permissions to have their own ooc colour
+	var/pregame_timestart = 240			// Time it takes for the server to start the game
 	var/allow_vote_restart = 0 			// allow votes to restart
 	var/allow_vote_mode = 0				// allow votes to change mode
 	var/vote_delay = 6000				// minimum time between voting sessions (deciseconds, 10 minute default)
@@ -66,6 +67,9 @@
 	var/assistantlimit = 0 //enables assistant limiting
 	var/assistantratio = 2 //how many assistants to security members
 
+	var/prob_free_golems = 75 //chance for free golems spawners to appear roundstart
+	var/unrestricted_free_golems = FALSE //if true, free golems can appear on all roundtypes
+
 	var/traitor_objectives_amount = 2
 	var/shadowling_max_age = 0
 
@@ -85,6 +89,7 @@
 	var/githuburl = "http://example.org"
 	var/donationsurl = "http://example.org"
 	var/repositoryurl = "http://example.org"
+	var/discordurl = "http://example.org"
 
 	var/overflow_server_url
 	var/forbid_singulo_possession = 0
@@ -172,6 +177,9 @@
 	var/disable_away_missions = 0 // disable away missions
 	var/disable_space_ruins = 0 //disable space ruins
 
+	var/extra_space_ruin_levels_min = 2
+	var/extra_space_ruin_levels_max = 4
+
 	var/ooc_allowed = 1
 	var/looc_allowed = 1
 	var/dooc_allowed = 1
@@ -201,6 +209,12 @@
 	// Nightshift
 	var/randomize_shift_time = FALSE
 	var/enable_night_shifts = FALSE
+
+	// Developer
+	var/developer_express_start = 0
+
+	// Automatic localhost admin disable
+	var/disable_localhost_admin = 0
 
 /datum/configuration/New()
 	for(var/T in subtypesof(/datum/game_mode))
@@ -269,6 +283,12 @@
 				if("jobs_have_minimal_access")
 					config.jobs_have_minimal_access = 1
 
+				if("prob_free_golems")
+					config.prob_free_golems = text2num(value)
+
+				if("unrestricted_free_golems")
+					config.unrestricted_free_golems = TRUE
+
 				if("shadowling_max_age")
 					config.shadowling_max_age = text2num(value)
 
@@ -326,6 +346,9 @@
 				if("allow_admin_ooccolor")
 					config.allow_admin_ooccolor = 1
 
+				if("pregame_timestart")
+					config.pregame_timestart = text2num(value)
+
 				if("allow_vote_restart")
 					config.allow_vote_restart = 1
 
@@ -382,6 +405,9 @@
 
 				if("githuburl")
 					config.githuburl = value
+
+				if("discordurl")
+					config.discordurl = value
 
 				if("donationsurl")
 					config.donationsurl = value
@@ -578,6 +604,14 @@
 				if("disable_cid_warn_popup")
 					config.disable_cid_warn_popup = 1
 
+				if("extra_space_ruin_levels_min")
+					var/vvalue = text2num(value)
+					config.extra_space_ruin_levels_min = max(vvalue, 0)
+
+				if("extra_space_ruin_levels_max")
+					var/vvalue = text2num(value)
+					config.extra_space_ruin_levels_max = max(vvalue, 0)
+
 				if("max_loadout_points")
 					config.max_loadout_points = text2num(value)
 
@@ -612,6 +646,10 @@
 					config.high_pop_mc_mode_amount = text2num(value)
 				if("disable_high_pop_mc_mode_amount")
 					config.disable_high_pop_mc_mode_amount = text2num(value)
+				if("developer_express_start")
+					config.developer_express_start = 1
+				if("disable_localhost_admin")
+					config.disable_localhost_admin = 1
 				else
 					log_config("Unknown setting in configuration: '[name]'")
 

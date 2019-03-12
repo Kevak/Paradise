@@ -1,7 +1,3 @@
-#define CAT_NORMAL 1
-#define CAT_HIDDEN 2  // also used in corresponding wires/vending.dm
-#define CAT_COIN   4
-
 /**
  *  Datum used to hold information about a product in a vending machine
  */
@@ -47,7 +43,7 @@
 	var/icon_deny //Icon_state when denying access
 
 	// Power
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 10
 	var/vend_power_usage = 150
 
@@ -292,7 +288,7 @@
 		insert_item(user, I)
 		return
 	else
-		..()
+		return ..()
 
 //Override this proc to do per-machine checks on the inserted item, but remember to call the parent to handle these generic checks before your logic!
 /obj/machinery/vending/proc/item_slot_check(mob/user, obj/item/I)
@@ -390,9 +386,8 @@
 	// empty at high security levels
 	if(customer_account.security_level != 0) //If card requires pin authentication (ie seclevel 1 or 2)
 		var/attempt_pin = input("Enter pin code", "Vendor transaction") as num
-		customer_account = attempt_account_access(customer_account, attempt_pin, 2)
 
-		if(!customer_account)
+		if(!attempt_account_access(customer_account.account_number, attempt_pin, 2))
 			src.status_message = "Unable to access account: incorrect credentials."
 			src.status_error = 1
 			return 0
@@ -403,11 +398,9 @@
 		return 0
 	else
 		// Okay to move the money at this point
-		var/paid = customer_account.charge(currently_vending.price,
-			transaction_purpose = "Purchase of [currently_vending.product_name]",
-			terminal_name = name,
-			terminal_id = name,
-			dest_name = vendor_account.owner_name)
+		var/paid = customer_account.charge(currently_vending.price, vendor_account,
+			"Purchase of [currently_vending.product_name]", name, vendor_account.owner_name,
+			"Sale of [currently_vending.product_name]", customer_account.owner_name)
 
 		if(paid)
 			// Give the vendor the money. We use the account owner name, which means
@@ -423,15 +416,8 @@
  */
 /obj/machinery/vending/proc/credit_purchase(var/target as text)
 	vendor_account.money += currently_vending.price
-
-	var/datum/transaction/T = new()
-	T.target_name = target
-	T.purpose = "Purchase of [currently_vending.product_name]"
-	T.amount = "[currently_vending.price]"
-	T.source_terminal = src.name
-	T.date = current_date_string
-	T.time = station_time_timestamp()
-	vendor_account.transaction_log.Add(T)
+	vendor_account.credit(currently_vending.price, "Sale of [currently_vending.product_name]",
+	name, target)
 
 /obj/machinery/vending/attack_ai(mob/user)
 	return attack_hand(user)
@@ -551,7 +537,7 @@
 	if((href_list["vend"]) && vend_ready && !currently_vending)
 
 		if(issilicon(usr) && !isrobot(usr))
-			to_chat(usr, "<span class=warning>The vending machine refuses to interface with you, as you are not in its target demographic!</span>")
+			to_chat(usr, "<span class='warning'>The vending machine refuses to interface with you, as you are not in its target demographic!</span>")
 			return
 
 		if(!allowed(usr) && !usr.can_admin_interact() && !emagged && scan_id) //For SECURE VENDING MACHINES YEAH
@@ -840,6 +826,9 @@
 				  /obj/item/reagent_containers/food/drinks/chicken_soup = 30,/obj/item/reagent_containers/food/drinks/weightloss = 50, /obj/item/reagent_containers/food/drinks/mug = 50)
 	refill_canister = /obj/item/vending_refill/coffee
 
+/obj/machinery/vending/coffee/free
+	prices = list()
+
 /obj/machinery/vending/coffee/New()
 	..()
 	component_parts = list()
@@ -857,7 +846,7 @@
 		to_chat(user, "<span class='warning'>[I] is not compatible with this machine.</span>")
 		return FALSE
 	if(!I.is_open_container())
-		to_chat(user, "<span class='warning>You need to open [I] before you insert it.</span>")
+		to_chat(user, "<span class='warning'>You need to open [I] before you insert it.</span>")
 		return FALSE
 	return TRUE
 
@@ -892,6 +881,9 @@
 					/obj/item/reagent_containers/food/snacks/pistachios = 35, /obj/item/reagent_containers/food/snacks/spacetwinkie = 30,/obj/item/reagent_containers/food/snacks/cheesiehonkers = 25,/obj/item/reagent_containers/food/snacks/tastybread = 30)
 	refill_canister = /obj/item/vending_refill/snack
 
+/obj/machinery/vending/snack/free
+	prices = list()
+
 /obj/machinery/vending/snack/New()
 	..()
 	component_parts = list()
@@ -905,13 +897,16 @@
 /obj/machinery/vending/chinese
 	name = "\improper Mr. Chang"
 	desc = "A self-serving Chinese food machine, for all your Chinese food needs."
-	product_slogans = "Taste 5000 years of culture!"
-	icon_state = "snack"
+	product_slogans = "Taste 5000 years of culture!;Mr. Chang, approved for safe consumption in over 10 sectors!;Chinese food is great for a date night, or a lonely night!;You can't go wrong with Mr. Chang's authentic Chinese food!"
+	icon_state = "chang"
 	products = list(/obj/item/reagent_containers/food/snacks/chinese/chowmein = 6, /obj/item/reagent_containers/food/snacks/chinese/tao = 6, /obj/item/reagent_containers/food/snacks/chinese/sweetsourchickenball = 6, /obj/item/reagent_containers/food/snacks/chinese/newdles = 6,
 					/obj/item/reagent_containers/food/snacks/chinese/rice = 6)
 	prices = list(/obj/item/reagent_containers/food/snacks/chinese/chowmein = 50, /obj/item/reagent_containers/food/snacks/chinese/tao = 50, /obj/item/reagent_containers/food/snacks/chinese/sweetsourchickenball = 50, /obj/item/reagent_containers/food/snacks/chinese/newdles = 50,
 					/obj/item/reagent_containers/food/snacks/chinese/rice = 50)
 	refill_canister = /obj/item/vending_refill/chinese
+
+/obj/machinery/vending/chinese/free
+	prices = list()
 
 /obj/machinery/vending/chinese/New()
 	..()
@@ -937,6 +932,9 @@
 					/obj/item/reagent_containers/food/drinks/cans/dr_gibb = 20,/obj/item/reagent_containers/food/drinks/cans/starkist = 20,
 					/obj/item/reagent_containers/food/drinks/cans/space_up = 20,/obj/item/reagent_containers/food/drinks/cans/grape_juice = 20)
 	refill_canister = /obj/item/vending_refill/cola
+
+/obj/machinery/vending/cola/free
+	prices = list()
 
 /obj/machinery/vending/cola/New()
 	..()
@@ -964,6 +962,9 @@
 					/obj/item/cartridge/atmos = 75,/obj/item/cartridge/janitor = 100,/obj/item/cartridge/signal/toxins = 150,
 					/obj/item/cartridge/signal = 75)
 	armor = list(melee = 100, bullet = 100, laser = 100, energy = 100, bomb = 0, bio = 0, rad = 0)
+
+/obj/machinery/vending/cart/free
+	prices = list()
 
 /obj/machinery/vending/liberationstation
 	name = "\improper Liberation Station"
@@ -994,6 +995,9 @@
 	prices = list(/obj/item/storage/fancy/cigarettes = 60,/obj/item/storage/fancy/cigarettes/cigpack_uplift = 60,/obj/item/storage/fancy/cigarettes/cigpack_robust = 60,/obj/item/storage/fancy/cigarettes/cigpack_carp = 60,/obj/item/storage/fancy/cigarettes/cigpack_midori = 60,/obj/item/storage/fancy/cigarettes/cigpack_random = 150, /obj/item/reagent_containers/food/pill/patch/nicotine = 15, /obj/item/storage/box/matches = 10,/obj/item/lighter/random = 60, /obj/item/storage/fancy/rollingpapers = 20)
 	refill_canister = /obj/item/vending_refill/cigarette
 
+/obj/machinery/vending/cigarette/free
+	prices = list()
+
 /obj/machinery/vending/cigarette/New()
 	..()
 	component_parts = list()
@@ -1013,7 +1017,7 @@
 	req_access_txt = "5"
 	products = list(/obj/item/reagent_containers/glass/bottle/charcoal = 4,/obj/item/reagent_containers/glass/bottle/morphine = 4,/obj/item/reagent_containers/glass/bottle/ether = 4,/obj/item/reagent_containers/glass/bottle/epinephrine = 4,
 					/obj/item/reagent_containers/glass/bottle/toxin = 4,/obj/item/reagent_containers/syringe/antiviral = 6,/obj/item/reagent_containers/syringe/insulin = 4,
-					/obj/item/reagent_containers/syringe = 12,/obj/item/healthanalyzer = 5,/obj/item/healthupgrade = 5,/obj/item/reagent_containers/glass/beaker = 4,
+					/obj/item/reagent_containers/syringe = 12,/obj/item/healthanalyzer = 5,/obj/item/healthupgrade = 5,/obj/item/reagent_containers/glass/beaker = 4, /obj/item/reagent_containers/hypospray/safety = 2,
 					/obj/item/reagent_containers/dropper = 2,/obj/item/stack/medical/bruise_pack/advanced = 3, /obj/item/stack/medical/ointment/advanced = 3,
 					/obj/item/stack/medical/bruise_pack = 3,/obj/item/stack/medical/splint = 4, /obj/item/sensor_device = 2, /obj/item/reagent_containers/hypospray/autoinjector = 4,
 					/obj/item/pinpointer/crew = 2)
@@ -1149,6 +1153,10 @@
 					/obj/item/clothing/head/wizard/red = 1,
 					/obj/item/clothing/suit/wizrobe/red = 1,
 					/obj/item/clothing/shoes/sandal = 1,
+					/obj/item/clothing/suit/wizrobe/clown = 1,
+					/obj/item/clothing/head/wizard/clown = 1,
+					/obj/item/clothing/mask/gas/clownwiz = 1,
+					/obj/item/clothing/shoes/clown_shoes/magical = 1,
 					/obj/item/twohanded/staff = 2)
 	contraband = list(/obj/item/reagent_containers/glass/bottle/wizarditis = 1)
 	armor = list(melee = 100, bullet = 100, laser = 100, energy = 100, bomb = 0, bio = 0, rad = 0)
@@ -1176,8 +1184,8 @@
 					/obj/item/clothing/head/bandana = 1,/obj/item/clothing/under/soviet = 1,/obj/item/clothing/head/ushanka = 1,/obj/item/clothing/suit/imperium_monk = 1,
 					/obj/item/clothing/mask/gas/cyborg = 1,/obj/item/clothing/suit/holidaypriest = 1,/obj/item/clothing/head/wizard/marisa/fake = 1,
 					/obj/item/clothing/suit/wizrobe/marisa/fake = 1,/obj/item/clothing/under/sundress = 1,/obj/item/clothing/head/witchwig = 1,/obj/item/twohanded/staff/broom = 1,
-					/obj/item/clothing/suit/wizrobe/fake = 1,/obj/item/clothing/head/wizard/fake = 1,/obj/item/twohanded/staff = 3,/obj/item/clothing/mask/gas/sexyclown = 1,
-					/obj/item/clothing/under/sexyclown = 1,/obj/item/clothing/mask/gas/sexymime = 1,/obj/item/clothing/under/sexymime = 1,
+					/obj/item/clothing/suit/wizrobe/fake = 1,/obj/item/clothing/head/wizard/fake = 1,/obj/item/twohanded/staff = 3,/obj/item/clothing/mask/gas/clown_hat/sexy = 1,
+					/obj/item/clothing/under/rank/clown/sexy = 1,/obj/item/clothing/mask/gas/sexymime = 1,/obj/item/clothing/under/sexymime = 1,
 					/obj/item/clothing/mask/face/bat = 1,/obj/item/clothing/mask/face/bee = 1,/obj/item/clothing/mask/face/bear = 1,/obj/item/clothing/mask/face/raven = 1,/obj/item/clothing/mask/face/jackal = 1,/obj/item/clothing/mask/face/fox = 1,/obj/item/clothing/mask/face/tribal = 1,/obj/item/clothing/mask/face/rat = 1,
 					/obj/item/clothing/suit/apron/overalls = 1,
 					/obj/item/clothing/head/rabbitears =1, /obj/item/clothing/head/sombrero = 1, /obj/item/clothing/suit/poncho = 1,
@@ -1191,7 +1199,8 @@
 					/obj/item/clothing/suit/snowman = 1,/obj/item/clothing/head/snowman = 1,
 					/obj/item/clothing/head/cueball = 1,/obj/item/clothing/under/scratch = 1,
 					/obj/item/clothing/under/victdress = 1, /obj/item/clothing/under/victdress/red = 1, /obj/item/clothing/suit/victcoat = 1, /obj/item/clothing/suit/victcoat/red = 1,
-					/obj/item/clothing/under/victsuit = 1, /obj/item/clothing/under/victsuit/redblk = 1, /obj/item/clothing/under/victsuit/red = 1, /obj/item/clothing/suit/tailcoat = 1)
+					/obj/item/clothing/under/victsuit = 1, /obj/item/clothing/under/victsuit/redblk = 1, /obj/item/clothing/under/victsuit/red = 1, /obj/item/clothing/suit/tailcoat = 1,
+					/obj/item/clothing/suit/draculacoat = 1, /obj/item/clothing/head/zepelli = 1)
 	contraband = list(/obj/item/clothing/suit/judgerobe = 1,/obj/item/clothing/head/powdered_wig = 1,/obj/item/gun/magic/wand = 1, /obj/item/clothing/mask/balaclava=1, /obj/item/clothing/mask/horsehead = 2)
 	premium = list(/obj/item/clothing/suit/hgpirate = 1, /obj/item/clothing/head/hgpiratecap = 1, /obj/item/clothing/head/helmet/roman = 1, /obj/item/clothing/head/helmet/roman/legionaire = 1, /obj/item/clothing/under/roman = 1, /obj/item/clothing/shoes/roman = 1, /obj/item/shield/riot/roman = 1)
 	refill_canister = /obj/item/vending_refill/autodrobe
@@ -1213,16 +1222,18 @@
 	icon_state = "dinnerware"
 	products = list(/obj/item/storage/bag/tray = 8,/obj/item/kitchen/utensil/fork = 6,
 					/obj/item/kitchen/knife = 3,/obj/item/kitchen/rollingpin = 2,
+					/obj/item/kitchen/sushimat = 3,
 					/obj/item/reagent_containers/food/drinks/drinkingglass = 8, /obj/item/clothing/suit/chef/classic = 2,
 					/obj/item/reagent_containers/food/condiment/pack/ketchup = 5,
 					/obj/item/reagent_containers/food/condiment/pack/hotsauce = 5,
 					/obj/item/reagent_containers/food/condiment/saltshaker =5,
 					/obj/item/reagent_containers/food/condiment/peppermill =5,
-					/obj/item/whetstone = 2,
+					/obj/item/whetstone = 2, /obj/item/mixing_bowl = 10,
 					/obj/item/kitchen/mould/bear = 1, /obj/item/kitchen/mould/worm = 1,
 					/obj/item/kitchen/mould/bean = 1, /obj/item/kitchen/mould/ball = 1,
 					/obj/item/kitchen/mould/cane = 1, /obj/item/kitchen/mould/cash = 1,
-					/obj/item/kitchen/mould/coin = 1, /obj/item/kitchen/mould/loli = 1)
+					/obj/item/kitchen/mould/coin = 1, /obj/item/kitchen/mould/loli = 1,
+					/obj/item/kitchen/cutter = 2)
 	contraband = list(/obj/item/kitchen/rollingpin = 2, /obj/item/kitchen/knife/butcher = 2)
 	armor = list(melee = 100, bullet = 100, laser = 100, energy = 100, bomb = 0, bio = 0, rad = 0)
 
@@ -1369,7 +1380,7 @@
 	vend_reply = "Thank you for using the ClothesMate!"
 	products = list(/obj/item/clothing/head/that=2,/obj/item/clothing/head/fedora=1,/obj/item/clothing/glasses/monocle=1,
 	/obj/item/clothing/under/suit_jacket/navy=2,/obj/item/clothing/under/kilt=1,/obj/item/clothing/under/overalls=1,
-	/obj/item/clothing/under/suit_jacket/really_black=2,/obj/item/clothing/under/pants/jeans=3,/obj/item/clothing/under/pants/classicjeans=2,
+	/obj/item/clothing/under/suit_jacket/really_black=2,/obj/item/clothing/suit/storage/lawyer/blackjacket=2,/obj/item/clothing/under/pants/jeans=3,/obj/item/clothing/under/pants/classicjeans=2,
 	/obj/item/clothing/under/pants/camo = 1,/obj/item/clothing/under/pants/blackjeans=2,/obj/item/clothing/under/pants/khaki=2,
 	/obj/item/clothing/under/pants/white=2,/obj/item/clothing/under/pants/red=1,/obj/item/clothing/under/pants/black=2,
 	/obj/item/clothing/under/pants/tan=2,/obj/item/clothing/under/pants/blue=1,/obj/item/clothing/under/pants/track=1,/obj/item/clothing/suit/jacket/miljacket = 1,
@@ -1432,6 +1443,9 @@
 	contraband = list(/obj/item/fish_eggs/babycarp = 5)
 	premium = list(/obj/item/toy/pet_rock/fred = 1, /obj/item/toy/pet_rock/roxie = 1)
 	refill_canister = /obj/item/vending_refill/crittercare
+
+/obj/machinery/vending/crittercare/free
+	prices = list()
 
 /obj/machinery/vending/crittercare/New()
 	..()

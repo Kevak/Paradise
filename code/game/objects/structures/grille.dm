@@ -17,6 +17,8 @@
 	var/rods_broken = 1
 	var/grille_type
 	var/broken_type = /obj/structure/grille/broken
+	var/shockcooldown = 0
+	var/my_shockcooldown = 1 SECONDS
 
 /obj/structure/grille/fence/
 	var/width = 3
@@ -67,20 +69,28 @@
 
 /obj/structure/grille/Bumped(atom/user)
 	if(ismob(user))
+		if(!(shockcooldown <= world.time))
+			return
 		shock(user, 70)
+		shockcooldown = world.time + my_shockcooldown
+
+/obj/structure/grille/hulk_damage()
+	return 60
+
+/obj/structure/grille/attack_hulk(mob/living/carbon/human/user, does_attack_animation = FALSE)
+	if(user.a_intent == INTENT_HARM)
+		if(!shock(user, 70))
+			..(user, TRUE)
+		return TRUE
 
 /obj/structure/grille/attack_hand(mob/living/user)
-	user.changeNext_move(CLICK_CD_MELEE)
-	user.do_attack_animation(src)
-	user.visible_message("<span class='warning'>[user] kicks [src].</span>", \
-						 "<span class='warning'>You kick [src].</span>", \
-						 "You hear twisting metal.")
-
-	if(shock(user, 70))
+	. = ..()
+	if(.)
 		return
-	if(HULK in user.mutations)
-		take_damage(60, BRUTE, "melee", 1)
-	else
+	user.changeNext_move(CLICK_CD_MELEE)
+	user.do_attack_animation(src, ATTACK_EFFECT_KICK)
+	user.visible_message("<span class='warning'>[user] hits [src].</span>")
+	if(!shock(user, 70))
 		take_damage(rand(5,10), BRUTE, "melee", 1)
 
 /obj/structure/grille/attack_alien(mob/living/user)
@@ -137,7 +147,7 @@
 			return
 
 //window placing begin
-	else if(istype(W,/obj/item/stack/sheet/rglass) || istype(W,/obj/item/stack/sheet/glass) || istype(W,/obj/item/stack/sheet/plasmaglass) || istype(W,/obj/item/stack/sheet/plasmarglass))
+	else if(is_glass_sheet(W))
 		build_window(W, user)
 		return
 //window placing end
@@ -146,6 +156,7 @@
 		return ..()
 
 /obj/structure/grille/proc/build_window(obj/item/stack/sheet/S, mob/user)
+	var/dir_to_set = NORTH
 	if(!istype(S) || !user)
 		return
 	if(broken)
@@ -160,59 +171,40 @@
 	if(!getRelativeDirection(src, user) && (user.loc != loc))	//essentially a cardinal direction adjacent or sharing same loc check
 		to_chat(user, "<span class='warning'>You can't reach.</span>")
 		return
-	if(/obj/structure/window/full in loc)	//check for a full window already present (blocks the whole tile)
-		to_chat(user, "<span class='warning'>There is already a full window there.</span>")
-		return
-	var/selection = alert(user, "What type of window would you like to place?", "Window Construction", "One Direction", "Full", "Cancel")
-	if(selection == "Cancel")
-		return
-	if(selection == "Full")
-		if(S.get_amount() < 2)
-			to_chat(user, "<span class='warning'>You need at least two sheets of glass for that!</span>")
+	if(loc == user.loc)
+		dir_to_set = user.dir
+	else
+		if(x == user.x)
+			if(y > user.y)
+				dir_to_set = SOUTH
+			else
+				dir_to_set = NORTH
+		else if(y == user.y)
+			if(x > user.x)
+				dir_to_set = WEST
+			else
+				dir_to_set = EAST
+	for(var/obj/structure/window/WINDOW in loc)
+		if(WINDOW.dir == dir_to_set)
+			to_chat(user, "<span class='notice'>There is already a window facing this way there.</span>")
 			return
-		if(do_after(user, 20, target = src))	//glass doesn't have a toolspeed, so no multiplier
-			if(broken || !anchored || !src)		//make sure the grille is still intact, anchored, and exists!
-				return
-			if(S.get_amount() < 2)				//make sure we still have enough for this!
-				return
-			if(!getRelativeDirection(src, user) && (user.loc != loc))	//make sure we can still do this from our location
-				return
-			var/obj/structure/window/W = new S.full_window(get_turf(src))
-			S.use(2)
-			W.anchored = 0
-			W.state = 0
-			to_chat(user, "<span class='notice'>You place [W] on [src].</span>")
-			W.update_icon()
-		return
-	if(selection == "One Direction")
-		var/dir_selection = input("Which direction will this window face?", "Direction") as null|anything in list("north", "east", "south", "west")
-		if(!dir_selection)
+	to_chat(user, "<span class='notice'>You start placing the window...</span>")
+	if(do_after(user, 20, target = src))
+		if(!loc || !anchored) //Grille destroyed or unanchored while waiting
 			return
-		var/temp_dir = text2dir(dir_selection)
-		for(var/obj/structure/window/W in loc)
-			if(istype(W, /obj/structure/window/full))	//double checking in case a full window was created while selecting direction
-				to_chat(user, "<span class='warning'>There is already a full window there.</span>")
+		for(var/obj/structure/window/WINDOW in loc)
+			if(WINDOW.dir == dir_to_set)//checking this for a 2nd time to check if a window was made while we were waiting.
+				to_chat(user, "<span class='notice'>There is already a window facing this way there.</span>")
 				return
-			if(W.dir == temp_dir)	//to avoid building a window on top of an existing window
-				to_chat(user, "<span class='warning'>There is already a window facing this direction there.</span>")
-				return
-		if(do_after(user, 20, target = src))
-			if(broken || !anchored || !src)		//make sure the grille is still intact, anchored, and exists!
-				return
-			if(S.get_amount() < 1)				//make sure we still have enough fir this!
-				to_chat(user, "<span class='warning'>You need at least one sheet of glass for that!</span>")
-				return
-			if(!getRelativeDirection(src, user) && (user.loc != loc))	//make sure we can still do this from our location
-				return
-			var/obj/structure/window/W = new S.created_window(get_turf(src))
-			S.use(1)
-			W.setDir(temp_dir)
-			W.ini_dir = temp_dir
-			W.anchored = 0
-			W.state = 0
-			to_chat(user, "<span class='notice'>You place [W] on [src].</span>")
-			W.update_icon()
-		return
+		var/obj/structure/window/W = new S.created_window(get_turf(src))
+		S.use(1)
+		W.setDir(dir_to_set)
+		W.ini_dir = dir_to_set
+		W.anchored = FALSE
+		W.state = WINDOW_OUT_OF_FRAME
+		to_chat(user, "<span class='notice'>You place the [W] on [src].</span>")
+		W.update_nearby_icons()
+	return
 
 /obj/structure/grille/attacked_by(obj/item/I, mob/living/user)
 	user.changeNext_move(CLICK_CD_MELEE)
@@ -262,9 +254,7 @@
 	var/obj/structure/cable/C = T.get_cable_node()
 	if(C)
 		if(electrocute_mob(user, C, src))
-			var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
-			s.set_up(3, 1, src)
-			s.start()
+			do_sparks(3, 1, src)
 			return 1
 		else
 			return 0
@@ -282,7 +272,7 @@
 			var/turf/T = get_turf(src)
 			var/obj/structure/cable/C = T.get_cable_node()
 			if(C)
-				playsound(loc, 'sound/magic/LightningShock.ogg', 100, 1, extrarange = 5)
+				playsound(loc, 'sound/magic/lightningshock.ogg', 100, 1, extrarange = 5)
 				tesla_zap(src, 3, C.powernet.avail * 0.01) //Zap for 1/100 of the amount of power. At a million watts in the grid, it will be as powerful as a tesla revolver shot.
 				C.powernet.load += C.powernet.avail * 0.0375 // you can gain up to 3.5 via the 4x upgrades power is halved by the pole so thats 2x then 1X then .5X for 3.5x the 3 bounces shock.
 	return ..()

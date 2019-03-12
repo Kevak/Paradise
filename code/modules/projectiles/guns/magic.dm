@@ -27,7 +27,7 @@
 	if(no_den_usage)
 		var/area/A = get_area(user)
 		if(istype(A, /area/wizard_station))
-			to_chat(user, "<span class='warning'>You know better than to violate the security of The Den, best wait until you leave to use [src].<span>")
+			to_chat(user, "<span class='warning'>You know better than to violate the security of The Den, best wait until you leave to use [src].</span>")
 			return
 		else
 			no_den_usage = 0
@@ -72,10 +72,10 @@
 	return
 
 /obj/item/gun/magic/shoot_with_empty_chamber(mob/living/user as mob|obj)
-	to_chat(user, "<span class='warning'>The [name] whizzles quietly.<span>")
+	to_chat(user, "<span class='warning'>The [name] whizzles quietly.</span>")
 	return
 
 /obj/item/gun/magic/suicide_act(mob/user)
-	user.visible_message("<span class='suicide'>[user] is twisting the [name] above \his head, releasing a magical blast! It looks like \he's trying to commit suicide.</span>")
+	user.visible_message("<span class='suicide'>[user] is twisting the [name] above [user.p_their()] head, releasing a magical blast! It looks like [user.p_theyre()] trying to commit suicide.</span>")
 	playsound(loc, fire_sound, 50, 1, -1)
 	return FIRELOSS

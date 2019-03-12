@@ -15,6 +15,7 @@
 
 	var/list/stacktypes
 	var/channels = list()
+	var/list/custom_removals = list()
 
 
 /obj/item/robot_module/emp_act(severity)
@@ -39,10 +40,10 @@
 /obj/item/robot_module/proc/fix_modules()
 	for(var/obj/item/I in modules)
 		I.flags |= NODROP
-		I.mouse_opacity = 2
+		I.mouse_opacity = MOUSE_OPACITY_OPAQUE
 	if(emag)
 		emag.flags |= NODROP
-		emag.mouse_opacity = 2
+		emag.mouse_opacity = MOUSE_OPACITY_OPAQUE
 
 /obj/item/robot_module/proc/respawn_consumable(mob/living/silicon/robot/R)
 	if(!stacktypes || !stacktypes.len)
@@ -77,6 +78,7 @@
 	R.add_language("Sol Common", 1)
 	R.add_language("Tradeband", 1)
 	R.add_language("Gutter", 0)
+	R.add_language("Neo-Russkiya", 0)
 	R.add_language("Sinta'unathi", 0)
 	R.add_language("Siik'tajr", 0)
 	R.add_language("Canilunzt", 0)
@@ -102,6 +104,13 @@
 		A.Remove(R)
 		qdel(A)
 	R.module_actions.Cut()
+
+// Return true in an overridden subtype to prevent normal removal handling
+/obj/item/robot_module/proc/handle_custom_removal(component_id, mob/living/user, obj/item/W, params)
+	return FALSE
+
+/obj/item/robot_module/proc/handle_death(gibbed)
+	return
 
 /obj/item/robot_module/standard
 	name = "standard robot module"
@@ -145,15 +154,15 @@
 	modules += new /obj/item/stack/medical/ointment/advanced(src)
 	modules += new /obj/item/stack/medical/splint(src)
 	modules += new /obj/item/stack/nanopaste(src)
-	modules += new /obj/item/scalpel(src)
+	modules += new /obj/item/scalpel/laser/laser1(src)
 	modules += new /obj/item/hemostat(src)
 	modules += new /obj/item/retractor(src)
-	modules += new /obj/item/cautery(src)
 	modules += new /obj/item/bonegel(src)
 	modules += new /obj/item/FixOVein(src)
 	modules += new /obj/item/bonesetter(src)
 	modules += new /obj/item/circular_saw(src)
 	modules += new /obj/item/surgicaldrill(src)
+	modules += new /obj/item/gripper/medical(src)
 
 	emag = new /obj/item/reagent_containers/spray(src)
 
@@ -198,7 +207,7 @@
 	modules += new /obj/item/multitool/cyborg(src)
 	modules += new /obj/item/t_scanner(src)
 	modules += new /obj/item/analyzer(src)
-	modules += new /obj/item/taperoll/engineering(src)
+	modules += new /obj/item/holosign_creator/engineering(src)
 	modules += new /obj/item/gripper(src)
 	modules += new /obj/item/matter_decompiler(src)
 	modules += new /obj/item/floor_painter(src)
@@ -212,6 +221,11 @@
 
 	fix_modules()
 
+/obj/item/robot_module/engineering/handle_death()
+	var/obj/item/gripper/G = locate(/obj/item/gripper) in modules
+	if(G)
+		G.drop_item()
+
 /obj/item/robot_module/security
 	name = "security robot module"
 	module_type = "Security"
@@ -222,7 +236,7 @@
 	modules += new /obj/item/restraints/handcuffs/cable/zipties/cyborg(src)
 	modules += new /obj/item/melee/baton/loaded(src)
 	modules += new /obj/item/gun/energy/disabler/cyborg(src)
-	modules += new /obj/item/taperoll/police(src)
+	modules += new /obj/item/holosign_creator/security(src)
 	modules += new /obj/item/clothing/mask/gas/sechailer/cyborg(src)
 	emag = new /obj/item/gun/energy/laser/cyborg(src)
 
@@ -317,6 +331,7 @@
 	R.add_language("Chittin", 1)
 	R.add_language("Bubblish", 1)
 	R.add_language("Clownish",1)
+	R.add_language("Neo-Russkiya", 1)
 
 
 /obj/item/robot_module/miner
@@ -325,6 +340,7 @@
 	module_actions = list(
 		/datum/action/innate/robot_sight/meson,
 	)
+	custom_removals = list("KA modkits")
 
 /obj/item/robot_module/miner/New()
 	..()
@@ -340,6 +356,13 @@
 	emag = new /obj/item/borg/stun(src)
 
 	fix_modules()
+
+/obj/item/robot_module/miner/handle_custom_removal(component_id, mob/living/user, obj/item/W, params)
+    if(component_id == "KA modkits")
+        for(var/obj/item/gun/energy/kinetic_accelerator/cyborg/D in src)
+            D.attackby(W, user, params)
+        return TRUE
+    return ..()
 
 /obj/item/robot_module/deathsquad
 	name = "NT advanced combat module"
@@ -387,6 +410,7 @@
 	..()
 	modules += new /obj/item/healthanalyzer/advanced(src)
 	modules += new /obj/item/reagent_scanner/adv(src)
+	modules += new /obj/item/bodyanalyzer/borg/syndicate(src)
 	modules += new /obj/item/borg_defib(src)
 	modules += new /obj/item/roller_holder(src)
 	modules += new /obj/item/reagent_containers/borghypo/syndicate(src)
@@ -395,19 +419,59 @@
 	modules += new /obj/item/stack/medical/ointment/advanced(src)
 	modules += new /obj/item/stack/medical/splint(src)
 	modules += new /obj/item/stack/nanopaste(src)
-	modules += new /obj/item/scalpel(src)
+	modules += new /obj/item/scalpel/laser/laser1(src)
 	modules += new /obj/item/hemostat(src)
 	modules += new /obj/item/retractor(src)
-	modules += new /obj/item/cautery(src)
 	modules += new /obj/item/bonegel(src)
 	modules += new /obj/item/FixOVein(src)
 	modules += new /obj/item/bonesetter(src)
 	modules += new /obj/item/surgicaldrill(src)
+	modules += new /obj/item/gripper/medical(src)
 	modules += new /obj/item/melee/energy/sword/cyborg/saw(src) //Energy saw -- primary weapon
 	modules += new /obj/item/card/emag(src)
 	modules += new /obj/item/crowbar/cyborg(src)
 	modules += new /obj/item/pinpointer/operative(src)
 	emag = null
+
+	fix_modules()
+
+/obj/item/robot_module/syndicate_saboteur
+	name = "engineering robot module" //to disguise in examine
+	module_type = "Malf"
+
+	stacktypes = list(
+		/obj/item/stack/sheet/metal/cyborg = 50,
+		/obj/item/stack/sheet/glass/cyborg = 50,
+		/obj/item/stack/sheet/rglass/cyborg = 50,
+		/obj/item/stack/cable_coil/cyborg = 50,
+		/obj/item/stack/rods/cyborg = 60,
+		/obj/item/stack/tile/plasteel = 20
+		)
+
+/obj/item/robot_module/syndicate_saboteur/New()
+	..()
+	modules += new /obj/item/rcd/borg/syndicate(src)
+	modules += new /obj/item/rpd(src)
+	modules += new /obj/item/extinguisher(src)
+	modules += new /obj/item/weldingtool/largetank/cyborg(src)
+	modules += new /obj/item/screwdriver/cyborg(src)
+	modules += new /obj/item/wrench/cyborg(src)
+	modules += new /obj/item/crowbar/cyborg(src)
+	modules += new /obj/item/wirecutters/cyborg(src)
+	modules += new /obj/item/multitool/cyborg(src)
+	modules += new /obj/item/t_scanner(src)
+	modules += new /obj/item/analyzer(src)
+	modules += new /obj/item/gripper(src)
+	modules += new /obj/item/melee/energy/sword/cyborg(src)
+	modules += new /obj/item/card/emag(src)
+	modules += new /obj/item/borg_chameleon(src)
+	modules += new /obj/item/pinpointer/operative(src)
+	emag = null
+
+	for(var/T in stacktypes)
+		var/obj/item/stack/sheet/W = new T(src)
+		W.amount = stacktypes[T]
+		modules += W
 
 	fix_modules()
 
@@ -516,6 +580,12 @@
 	LR.Charge(R)
 
 	..()
+
+
+/obj/item/robot_module/drone/handle_death()
+	var/obj/item/gripper/G = locate(/obj/item/gripper) in modules
+	if(G)
+		G.drop_item()
 
 //checks whether this item is a module of the robot it is located in.
 /obj/item/proc/is_robot_module()

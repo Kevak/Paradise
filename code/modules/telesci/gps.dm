@@ -26,7 +26,7 @@ var/list/GPS_list = list()
 	emped = 1
 	overlays -= "working"
 	overlays += "emp"
-	addtimer(src, "reboot", 300)
+	addtimer(CALLBACK(src, .proc/reboot), 300)
 
 /obj/item/gps/proc/reboot()
 	emped = FALSE
@@ -140,7 +140,7 @@ var/list/GPS_list = list()
 /obj/item/gps/visible_debug/New()
 	. = ..()
 	tagged = list()
-	fast_processing.Add(src)
+	GLOB.fast_processing.Add(src)
 
 /obj/item/gps/visible_debug/process()
 	var/turf/T = get_turf(src)
@@ -161,5 +161,5 @@ var/list/GPS_list = list()
 	if(tagged)
 		clear()
 	tagged = null
-	fast_processing.Remove(src)
+	GLOB.fast_processing.Remove(src)
 	. = ..()

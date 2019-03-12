@@ -17,7 +17,8 @@
 	var/last_used = 0 //last world.time it was used.
 	var/battery_panel = 0 //whether the flash can be modified with a cell or not
 	var/overcharged = 0   //if overcharged the flash will set people on fire then immediately burn out (does so even if it doesn't blind them).
-
+	var/can_overcharge = TRUE //set this to FALSE if you don't want your flash to be overcharge capable
+	var/use_sound = 'sound/weapons/flash.ogg'
 
 /obj/item/flash/proc/clown_check(mob/user)
 	if(user && (CLUMSY in user.mutations) && prob(50))
@@ -26,19 +27,20 @@
 	return 1
 
 /obj/item/flash/attackby(obj/item/W, mob/user, params)
-	if(istype(W, /obj/item/screwdriver))
-		if(battery_panel)
-			to_chat(user, "<span class='notice'>You close the battery compartment on the [src].</span>")
-			battery_panel = 0
-		else
-			to_chat(user, "<span class='notice'>You open the battery compartment on the [src].</span>")
-			battery_panel = 1
-	if(battery_panel && !overcharged)
-		if(istype(W, /obj/item/stock_parts/cell))
-			to_chat(user, "<span class='notice'>You jam the cell into battery compartment on the [src].</span>")
-			qdel(W)
-			overcharged = 1
-			overlays += "overcharge"
+	if(can_overcharge)
+		if(istype(W, /obj/item/screwdriver))
+			if(battery_panel)
+				to_chat(user, "<span class='notice'>You close the battery compartment on the [src].</span>")
+				battery_panel = 0
+			else
+				to_chat(user, "<span class='notice'>You open the battery compartment on the [src].</span>")
+				battery_panel = 1
+		if(battery_panel && !overcharged)
+			if(istype(W, /obj/item/stock_parts/cell))
+				to_chat(user, "<span class='notice'>You jam the cell into battery compartment on the [src].</span>")
+				qdel(W)
+				overcharged = 1
+				overlays += "overcharge"
 
 /obj/item/flash/random/New()
 	..()
@@ -71,7 +73,7 @@
 	if(broken)
 		return 0
 
-	playsound(src.loc, 'sound/weapons/flash.ogg', 100, 1)
+	playsound(src.loc, use_sound, 100, 1)
 	flick("[initial(icon_state)]2", src)
 	times_used++
 
@@ -95,7 +97,7 @@
 			to_chat(M, "<span class='userdanger'>[user] blinds you with the flash!</span>")
 			if(M.weakeyes)
 				M.Stun(2)
-				M.visible_message("<span class='disarm'>[M] gasps and shields their eyes!</span>", "<span class='userdanger'>You gasp and shields your eyes!</span>")
+				M.visible_message("<span class='disarm'>[M] gasps and shields [M.p_their()] eyes!</span>", "<span class='userdanger'>You gasp and shields your eyes!</span>")
 		else
 			visible_message("<span class='disarm'>[user] fails to blind [M] with the flash!</span>")
 			to_chat(user, "<span class='warning'>You fail to blind [M] with the flash!</span>")
@@ -123,7 +125,7 @@
 				for(var/obj/item/borg/combat/shield/S in R.module.modules)
 					if(R.activated(S))
 						add_attack_logs(user, M, "Flashed with [src]")
-						user.visible_message("<span class='disarm'>[user] tries to overloads [M]'s sensors with the [src.name], but is blocked by [M]'s shield!</span>", "<span class='danger'>You try to overload [M]'s sensors with the [src.name], but are blocked by their shield!</span>")
+						user.visible_message("<span class='disarm'>[user] tries to overloads [M]'s sensors with the [src.name], but is blocked by [M]'s shield!</span>", "<span class='danger'>You try to overload [M]'s sensors with the [src.name], but are blocked by [M.p_their()] shield!</span>")
 						return 1
 		add_attack_logs(user, M, "Flashed with [src]")
 		if(M.flash_eyes(affect_silicon = 1))
@@ -168,9 +170,9 @@
 						resisted = 1
 
 					if(resisted)
-						to_chat(user, "<span class='warning'>This mind seems resistant to the [src.name]!</span>")
+						to_chat(user, "<span class='warning'>This mind seems resistant to the [name]!</span>")
 				else
-					to_chat(user, "<span class='warning'>They must be conscious before you can convert them!</span>")
+					to_chat(user, "<span class='warning'>They must be conscious before you can convert [M.p_them()]!</span>")
 			else
 				to_chat(user, "<span class='warning'>This mind is so vacant that it is not susceptible to influence!</span>")
 
@@ -186,6 +188,57 @@
 	..()
 	new /obj/effect/temp_visual/borgflash(get_turf(src))
 
+/obj/item/flash/cameraflash
+	name = "camera"
+	icon = 'icons/obj/items.dmi'
+	desc = "A polaroid camera. 10 photos left."
+	icon_state = "camera"
+	item_state = "electropack" //spelling, a coders worst enemy. This part gave me trouble for a while.
+	w_class = WEIGHT_CLASS_SMALL
+	slot_flags = SLOT_BELT
+	can_overcharge = FALSE
+	var/flash_max_charges = 5
+	var/flash_cur_charges = 5
+	var/charge_tick = 0
+	use_sound = 'sound/items/polaroid1.ogg'
+
+/obj/item/flash/cameraflash/burn_out() //stops from burning out
+	return
+
+/obj/item/flash/cameraflash/New()
+	..()
+	processing_objects.Add(src)
+
+/obj/item/flash/cameraflash/Destroy()
+	processing_objects.Remove(src)
+	return ..()
+
+/obj/item/flash/cameraflash/process() //this and the two parts above are part of the charge system.
+	charge_tick++
+	if(charge_tick < 10)
+		return FALSE
+	charge_tick = 0
+	flash_cur_charges = min(flash_cur_charges+1, flash_max_charges)
+	return TRUE
+
+/obj/item/flash/cameraflash/attack(mob/living/M, mob/user)
+    if(flash_cur_charges > 0)
+        flash_cur_charges -= 1
+        to_chat(user, "[src] now has [flash_cur_charges] charge\s.")
+        ..()
+    else
+        to_chat(user, "<span class='warning'>\The [src] needs time to recharge!</span>")
+    return
+
+/obj/item/flash/cameraflash/attack_self(mob/living/carbon/user, flag = 0)
+    if(flash_cur_charges > 0)
+        flash_cur_charges -= 1
+        to_chat(user, "[src] now has [flash_cur_charges] charge\s.")
+        ..()
+    else
+        to_chat(user, "<span class='warning'>\The [src] needs time to recharge!</span>")
+    return
+
 /obj/item/flash/memorizer
 	name = "memorizer"
 	desc = "If you see this, you're not likely to remember it any time soon."
@@ -194,7 +247,7 @@
 
 /obj/item/flash/armimplant
 	name = "photon projector"
-	desc = "A high-powered photon projector implant normally used for lighting purposes, but also doubles as a flashbulb weapon. Self-repair protocals fix the flashbulb if it ever burns out."
+	desc = "A high-powered photon projector implant normally used for lighting purposes, but also doubles as a flashbulb weapon. Self-repair protocols fix the flashbulb if it ever burns out."
 	var/flashcd = 20
 	var/overheat = 0
 	var/obj/item/organ/internal/cyberimp/arm/flash/I = null
@@ -208,7 +261,7 @@
 		to_chat(I.owner, "<span class='warning'>Your photon projector implant overheats and deactivates!</span>")
 		I.Retract()
 	overheat = FALSE
-	addtimer(src, "cooldown", flashcd * 2)
+	addtimer(CALLBACK(src, .proc/cooldown), flashcd * 2)
 
 /obj/item/flash/armimplant/try_use_flash(mob/user = null)
 	if(overheat)
@@ -216,7 +269,7 @@
 			to_chat(I.owner, "<span class='warning'>Your photon projector is running too hot to be used again so quickly!</span>")
 		return FALSE
 	overheat = TRUE
-	addtimer(src, "cooldown", flashcd)
+	addtimer(CALLBACK(src, .proc/cooldown), flashcd)
 	playsound(src.loc, 'sound/weapons/flash.ogg', 100, 1)
 	update_icon(1)
 	return TRUE

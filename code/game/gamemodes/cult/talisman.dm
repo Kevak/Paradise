@@ -151,7 +151,7 @@
 	if(!src || QDELETED(src) || !user || user.l_hand != src && user.r_hand != src || user.incapacitated() || !actual_selected_rune)
 		return ..(user, 0)
 
-	user.visible_message("<span class='warning'>Dust flows from [user]'s hand, and they disappear in a flash of red light!</span>", \
+	user.visible_message("<span class='warning'>Dust flows from [user]'s hand, and [user.p_they()] disappear[user.p_s()] in a flash of red light!</span>", \
 						 "<span class='cultitalic'>You speak the words of the talisman and find yourself somewhere else!</span>")
 	user.forceMove(get_turf(actual_selected_rune))
 	return ..()
@@ -220,7 +220,7 @@
 	. = ..()
 	user.visible_message("<span class='warning'>[user]'s hand flashes a bright blue!</span>", \
 						 "<span class='cultitalic'>You speak the words of the talisman, emitting an EMP blast.</span>")
-	empulse(src, 4, 8)
+	empulse(src, 4, 8, 1)
 
 
 //Rite of Disorientation: Stuns and inhibit speech on a single target for quite some time
@@ -279,7 +279,7 @@
 	var/mob/living/carbon/human/H = user
 	user.visible_message("<span class='warning'>Otherworldly armor suddenly appears on [user]!</span>", \
 						 "<span class='cultitalic'>You speak the words of the talisman, arming yourself!</span>")
-	if(H.get_species() == "Plasmaman")
+	if(isplasmaman(H))
 		H.equip_to_slot(new /obj/item/clothing/suit/space/eva/plasmaman/cultist(H), slot_wear_suit)
 		H.equip_to_slot(new /obj/item/clothing/head/helmet/space/eva/plasmaman/cultist(H), slot_head)
 	else
@@ -340,7 +340,7 @@
 			if(target.use(25))
 				new /obj/structure/constructshell(T)
 				to_chat(user, "<span class='warning'>The talisman clings to the metal and twists it into a construct shell!</span>")
-				user << sound('sound/magic/Staff_Chaos.ogg',0,1,25)
+				user << sound('sound/magic/staff_chaos.ogg',0,1,25)
 				qdel(src)
 				return
 		if(istype(target, /obj/item/stack/sheet/plasteel))
@@ -350,7 +350,7 @@
 			new /obj/item/stack/sheet/runed_metal(T,quantity)
 			target.use(quantity)
 			to_chat(user, "<span class='warning'>The talisman clings to the plasteel, transforming it into runed metal!</span>")
-			user << sound('sound/magic/Staff_Chaos.ogg',0,1,25)
+			user << sound('sound/magic/staff_chaos.ogg',0,1,25)
 			invoke(user, 1)
 			if(uses <= 0)
 				qdel(src)
@@ -419,4 +419,5 @@
 /obj/item/restraints/handcuffs/energy/cult/used/dropped(mob/user)
 	user.visible_message("<span class='danger'>[user]'s shackles shatter in a discharge of dark magic!</span>", \
 							"<span class='userdanger'>Your [src] shatters in a discharge of dark magic!</span>")
+	qdel(src)
 	. = ..()

@@ -19,7 +19,7 @@ var/bomb_set
 	var/removal_stage = 0 // 0 is no removal, 1 is covers removed, 2 is covers open, 3 is sealant open, 4 is unwrenched, 5 is removed from bolts.
 	var/lastentered
 	var/is_syndicate = 0
-	use_power = 0
+	use_power = NO_POWER_USE
 	unacidable = 1
 	var/previous_level = ""
 	var/datum/wires/nuclearbomb/wires = null
@@ -32,11 +32,11 @@ var/bomb_set
 	r_code = "[rand(10000, 99999.0)]"//Creates a random code upon object spawn.
 	wires = new/datum/wires/nuclearbomb(src)
 	previous_level = get_security_level()
-	poi_list |= src
+	GLOB.poi_list |= src
 
 /obj/machinery/nuclearbomb/Destroy()
 	QDEL_NULL(wires)
-	poi_list.Remove(src)
+	GLOB.poi_list.Remove(src)
 	return ..()
 
 /obj/machinery/nuclearbomb/process()
@@ -353,7 +353,7 @@ var/bomb_set
 	safety = 1
 	if(!lighthack)
 		icon_state = "nuclearbomb3"
-	playsound(src,'sound/machines/Alarm.ogg',100,0,5)
+	playsound(src,'sound/machines/alarm.ogg',100,0,5)
 	if(ticker && ticker.mode)
 		ticker.mode.explosion_in_progress = 1
 	sleep(100)
@@ -370,7 +370,7 @@ var/bomb_set
 
 	if(ticker)
 		if(ticker.mode && ticker.mode.name == "nuclear emergency")
-			var/obj/docking_port/mobile/syndie_shuttle = shuttle_master.getShuttle("syndicate")
+			var/obj/docking_port/mobile/syndie_shuttle = SSshuttle.getShuttle("syndicate")
 			if(syndie_shuttle)
 				ticker.mode:syndies_didnt_escape = is_station_level(syndie_shuttle.z)
 			ticker.mode:nuke_off_station = off_station
@@ -402,18 +402,33 @@ var/bomb_set
 	icon_state = "nucleardisk"
 	armor = list(melee = 0, bullet = 0, laser = 0, energy = 0, bomb = 30, bio = 0, rad = 0)
 
+/obj/item/disk/nuclear/unrestricted
+	desc = "Seems to have been stripped of its safeties, you better not lose it."
+
 /obj/item/disk/nuclear/New()
 	..()
 	processing_objects.Add(src)
-	poi_list |= src
+	GLOB.poi_list |= src
 
 /obj/item/disk/nuclear/process()
-	var/turf/disk_loc = get_turf(src)
-	if(!is_secure_level(disk_loc.z))
+	if(!check_disk_loc())
 		var/holder = get(src, /mob)
 		if(holder)
 			to_chat(holder, "<span class='danger'>You can't help but feel that you just lost something back there...</span>")
 		qdel(src)
+
+ //station disk is allowed on z1, escape shuttle/pods, CC, and syndicate shuttles/base, reset otherwise
+/obj/item/disk/nuclear/proc/check_disk_loc()
+	var/turf/T = get_turf(src)
+	var/area/A = get_area(src)
+	if(is_station_level(T.z))
+		return TRUE
+	if(A.nad_allowed)
+		return TRUE
+	return FALSE
+
+/obj/item/disk/nuclear/unrestricted/check_disk_loc()
+	return TRUE
 
 /obj/item/disk/nuclear/Destroy(force)
 	var/turf/diskturf = get_turf(src)
@@ -421,12 +436,12 @@ var/bomb_set
 	if(force)
 		message_admins("[src] has been !!force deleted!! in ([diskturf ? "[diskturf.x], [diskturf.y] ,[diskturf.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[diskturf.x];Y=[diskturf.y];Z=[diskturf.z]'>JMP</a>":"nonexistent location"]).")
 		log_game("[src] has been !!force deleted!! in ([diskturf ? "[diskturf.x], [diskturf.y] ,[diskturf.z]":"nonexistent location"]).")
-		poi_list.Remove(src)
+		GLOB.poi_list.Remove(src)
 		processing_objects.Remove(src)
 		return ..()
 
 	if(blobstart.len > 0)
-		poi_list.Remove(src)
+		GLOB.poi_list.Remove(src)
 		var/obj/item/disk/nuclear/NEWDISK = new(pick(blobstart))
 		transfer_fingerprints_to(NEWDISK)
 		message_admins("[src] has been destroyed at ([diskturf.x], [diskturf.y], [diskturf.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[diskturf.x];Y=[diskturf.y];Z=[diskturf.z]'>JMP</a>). Moving it to ([NEWDISK.x], [NEWDISK.y], [NEWDISK.z] - <A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[NEWDISK.x];Y=[NEWDISK.y];Z=[NEWDISK.z]'>JMP</a>).")

@@ -36,14 +36,14 @@
 	..()
 	spirits = list()
 	processing_objects.Add(src)
-	poi_list |= src
+	GLOB.poi_list |= src
 
 /obj/item/melee/ghost_sword/Destroy()
 	for(var/mob/dead/observer/G in spirits)
 		G.invisibility = initial(G.invisibility)
 	spirits.Cut()
 	processing_objects.Remove(src)
-	poi_list -= src
+	GLOB.poi_list -= src
 	. = ..()
 
 /obj/item/melee/ghost_sword/attack_self(mob/user)
@@ -52,7 +52,7 @@
 		return
 	to_chat(user, "You call out for aid, attempting to summon spirits to your side.")
 
-	notify_ghosts("[user] is raising their [src], calling for your help!", enter_link="<a href=?src=[UID()];follow=1>(Click to help)</a>", source = user, action = NOTIFY_FOLLOW)
+	notify_ghosts("[user] is raising [user.p_their()] [src], calling for your help!", enter_link="<a href=?src=[UID()];follow=1>(Click to help)</a>", source = user, action = NOTIFY_FOLLOW)
 
 	summon_cooldown = world.time + 600
 
@@ -71,7 +71,7 @@
 	var/list/contents = T.GetAllContents()
 	var/mob/dead/observer/current_spirits = list()
 
-	for(var/mob/dead/observer/O in player_list)
+	for(var/mob/dead/observer/O in GLOB.player_list)
 		if(is_type_in_list(O.following, contents))
 			ghost_counter++
 			O.invisibility = 0
@@ -116,7 +116,7 @@
 	switch(random)
 		if(1)
 			to_chat(user, "<span class='danger'>Your flesh begins to melt! Miraculously, you seem fine otherwise.</span>")
-			H.set_species("Skeleton")
+			H.set_species(/datum/species/skeleton)
 		if(2)
 			to_chat(user, "<span class='danger'>Power courses through you! You can now shift your form at will.")
 			if(user.mind)
@@ -209,7 +209,7 @@
 			user.visible_message("<span class='danger'>[user] turns \the [T] into [reset_string]!</span>")
 			T.ChangeTurf(reset_turf_type)
 			timer = world.time + reset_cooldown
-		playsound(T,'sound/magic/Fireball.ogg', 200, 1)
+		playsound(T,'sound/magic/fireball.ogg', 200, 1)
 
 /obj/effect/temp_visual/lavastaff
 	icon_state = "lavastaff_warn"

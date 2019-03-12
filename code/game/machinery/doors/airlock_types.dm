@@ -150,13 +150,15 @@
 
 /obj/machinery/door/airlock/uranium/New()
 	..()
-	addtimer(src, "radiate", event_step)
+	addtimer(CALLBACK(src, .proc/radiate), event_step)
+
 
 /obj/machinery/door/airlock/uranium/proc/radiate()
 	if(prob(50))
 		for(var/mob/living/L in range (3,src))
 			L.apply_effect(15,IRRADIATE,0)
-	addtimer(src, "radiate", event_step)
+	addtimer(CALLBACK(src, .proc/radiate), event_step)
+
 
 /obj/machinery/door/airlock/uranium/glass
 	opacity = 0
@@ -327,6 +329,31 @@
 	note_overlay_file = 'icons/obj/doors/airlocks/hatch/overlays.dmi'
 	assemblytype = /obj/structure/door_assembly/door_assembly_hatch
 
+/obj/machinery/door/airlock/hatch/syndicate
+	name = "syndicate hatch"
+	req_access_txt = "150"
+
+/obj/machinery/door/airlock/hatch/syndicate/command
+	name = "Command Center"
+	req_access_txt = "153"
+	explosion_block = 2
+	normal_integrity = 1000
+	security_level = 6
+
+/obj/machinery/door/airlock/hatch/syndicate/command/emag_act(mob/user)
+	to_chat(user, "<span class='notice'>The electronic systems in this door are far too advanced for your primitive hacking peripherals.</span>")
+	return
+
+/obj/machinery/door/airlock/hatch/syndicate/vault
+	name = "syndicate vault hatch"
+	req_access_txt = "151"
+	icon = 'icons/obj/doors/airlocks/vault/vault.dmi'
+	overlays_file = 'icons/obj/doors/airlocks/vault/overlays.dmi'
+	assemblytype = /obj/structure/door_assembly/door_assembly_vault
+	security_level = 6
+	hackProof = TRUE
+	aiControlDisabled = TRUE
+
 /obj/machinery/door/airlock/hatch/gamma
 	name = "gamma level hatch"
 	hackProof = 1
@@ -339,7 +366,7 @@
 		if(isElectrified())
 			if(shock(user, 75))
 				return
-	if(istype(C, /obj/item/detective_scanner) || istype(C, /obj/item/taperoll))
+	if(istype(C, /obj/item/detective_scanner))
 		return
 
 	if(istype(C, /obj/item/grenade/plastic/c4))
@@ -392,7 +419,7 @@
 		if(isElectrified())
 			if(shock(user, 75))
 				return
-	if(istype(C, /obj/item/detective_scanner) || istype(C, /obj/item/taperoll))
+	if(istype(C, /obj/item/detective_scanner))
 		return
 
 	add_fingerprint(user)

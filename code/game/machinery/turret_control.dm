@@ -56,6 +56,7 @@
 
 	syndicate = 1
 	faction = "syndicate"
+	req_access = list(access_syndicate_leader)
 
 /obj/machinery/turretid/Destroy()
 	if(control_area)
@@ -64,7 +65,7 @@
 			A.turret_controls -= src
 	return ..()
 
-/obj/machinery/turretid/initialize()
+/obj/machinery/turretid/Initialize()
 	..()
 	if(!control_area)
 		control_area = get_area(src)

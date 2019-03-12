@@ -103,7 +103,7 @@
 	actions_types = list(/datum/action/item_action/toggle_helmet_light)
 	can_toggle = 1
 	toggle_cooldown = 20
-	active_sound = 'sound/items/WEEOO1.ogg'
+	active_sound = 'sound/items/weeoo1.ogg'
 
 /obj/item/clothing/head/helmet/justice/escape
 	name = "alarm helmet"
@@ -173,7 +173,7 @@
 	actions_types = list(/datum/action/item_action/toggle_helmet_mode)
 	can_toggle = 1
 	toggle_cooldown = 20
-	toggle_sound = 'sound/items/ZippoClose.ogg'
+	toggle_sound = 'sound/items/zippoclose.ogg'
 
 obj/item/clothing/head/helmet/redtaghelm
 	name = "red laser tag helmet"
@@ -237,6 +237,12 @@ obj/item/clothing/head/blob
 	name = "emergency response team security helmet"
 	desc = "An in-atmosphere helmet worn by security members of the Nanotrasen Emergency Response Team. Has red highlights."
 	icon_state = "erthelmet_sec"
+
+/obj/item/clothing/head/helmet/ert/security/paranormal
+	name = "paranormal emergency response team helmet"
+	desc = "An in-atmosphere helmet worn by paranormal members of the Nanotrasen Emergency Response Team. Has crusader sigils."
+	icon_state = "knight_templar"
+	item_state = "knight_templar"
 
 //Engineer
 /obj/item/clothing/head/helmet/ert/engineer

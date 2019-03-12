@@ -52,11 +52,11 @@
 /obj/machinery/dna_scannernew
 	name = "\improper DNA modifier"
 	desc = "It scans DNA structures."
-	icon = 'icons/obj/Cryogenic2.dmi'
+	icon = 'icons/obj/cryogenic2.dmi'
 	icon_state = "scanner_open"
 	density = 1
 	anchored = 1.0
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 50
 	active_power_usage = 300
 	interact_offline = 1
@@ -103,8 +103,8 @@
 	for(var/obj/item/stock_parts/micro_laser/P in component_parts)
 		damage_coeff = P.rating
 
-/obj/machinery/dna_scannernew/allow_drop()
-	return 0
+/obj/machinery/dna_scannernew/AllowDrop()
+	return FALSE
 
 /obj/machinery/dna_scannernew/relaymove(mob/user as mob)
 	if(user.stat)
@@ -192,7 +192,7 @@
 		return
 	for(var/mob/living/carbon/slime/M in range(1,L))
 		if(M.Victim == L)
-			to_chat(usr, "[L.name] will not fit into the [src] because they have a slime latched onto their head.")
+			to_chat(usr, "[L.name] will not fit into the [src] because [L.p_they()] [L.p_have()] a slime latched onto [L.p_their()] head.")
 			return
 	if(L == user)
 		visible_message("[user] climbs into the [src].")
@@ -327,7 +327,7 @@
 
 	if(ishuman(occupant))
 		var/mob/living/carbon/human/H = occupant
-		if(NO_DNA in H.species.species_traits)
+		if(NO_DNA in H.dna.species.species_traits)
 			return 1
 
 	var/radiation_protection = occupant.run_armor_check(null, "rad", "Your clothes feel warm.", "Your clothes feel warm.")
@@ -359,7 +359,7 @@
 	var/obj/item/disk/data/disk = null
 	var/selected_menu_key = null
 	anchored = 1
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 10
 	active_power_usage = 400
 	var/waiting_for_user_input=0 // Fix for #274 (Mash create block injector without answering dialog to make unlimited injectors) - N3X
@@ -533,7 +533,7 @@
 		occupantData["name"] = connected.occupant.dna.real_name
 		occupantData["stat"] = connected.occupant.stat
 		occupantData["isViableSubject"] = 1
-		if((NOCLONE in connected.occupant.mutations && connected.scan_level < 3) || !src.connected.occupant.dna)
+		if((NOCLONE in connected.occupant.mutations && connected.scan_level < 3) || !src.connected.occupant.dna || (NO_DNA in connected.occupant.dna.species.species_traits))
 			occupantData["isViableSubject"] = 0
 		occupantData["health"] = connected.occupant.health
 		occupantData["maxHealth"] = connected.occupant.maxHealth

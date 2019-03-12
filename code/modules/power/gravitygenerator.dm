@@ -24,7 +24,7 @@ var/const/GRAV_NEEDS_WRENCH = 3
 	icon = 'icons/obj/machines/gravity_generator.dmi'
 	anchored = 1
 	density = 1
-	use_power = 0
+	use_power = NO_POWER_USE
 	unacidable = 1
 	var/sprite_number = 0
 
@@ -85,19 +85,11 @@ var/const/GRAV_NEEDS_WRENCH = 3
 // Generator which spawns with the station.
 //
 
-/obj/machinery/gravity_generator/main/station/initialize()
+/obj/machinery/gravity_generator/main/station/Initialize()
 	..()
 	setup_parts()
 	middle.overlays += "activated"
 	update_list()
-
-//
-// Generator an admin can spawn
-//
-
-/obj/machinery/gravity_generator/main/station/admin/New()
-	..()
-	initialize()
 
 //
 // Main Generator with the main code
@@ -109,7 +101,7 @@ var/const/GRAV_NEEDS_WRENCH = 3
 	active_power_usage = 3000
 	power_channel = ENVIRON
 	sprite_number = 8
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	interact_offline = 1
 	var/on = 1
 	var/breaker = 1
@@ -295,7 +287,7 @@ var/const/GRAV_NEEDS_WRENCH = 3
 /obj/machinery/gravity_generator/main/proc/set_state(var/new_state)
 	charging_state = POWER_IDLE
 	on = new_state
-	use_power = on ? 2 : 1
+	use_power = on ? ACTIVE_POWER_USE : IDLE_POWER_USE
 	// Sound the alert if gravity was just enabled or disabled.
 	var/alert = 0
 	var/area/area = get_area(src)
@@ -339,7 +331,7 @@ var/const/GRAV_NEEDS_WRENCH = 3
 				charge_count -= 2
 
 			if(charge_count % 4 == 0 && prob(75)) // Let them know it is charging/discharging.
-				playsound(src.loc, 'sound/effects/EMPulse.ogg', 100, 1)
+				playsound(src.loc, 'sound/effects/empulse.ogg', 100, 1)
 
 			updateDialog()
 			if(prob(25)) // To help stop "Your clothes feel warm" spam.
@@ -374,7 +366,7 @@ var/const/GRAV_NEEDS_WRENCH = 3
 /obj/machinery/gravity_generator/main/proc/shake_everyone()
 	var/turf/our_turf = get_turf(src)
 	var/sound/alert_sound = sound('sound/effects/alert.ogg')
-	for(var/shaked in mob_list)
+	for(var/shaked in GLOB.mob_list)
 		var/mob/M = shaked
 		var/turf/their_turf = get_turf(M)
 		if(their_turf && their_turf.z == our_turf.z)

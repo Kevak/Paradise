@@ -27,9 +27,9 @@
 	"The tray contains a body that might be responsive."
 	)
 	anchored = 1.0
-	var/open_sound = 'sound/items/Deconstruct.ogg'
+	var/open_sound = 'sound/items/deconstruct.ogg'
 
-/obj/structure/morgue/initialize()
+/obj/structure/morgue/Initialize()
 	. = ..()
 	update()
 
@@ -207,9 +207,7 @@
 		return
 	O.forceMove(loc)
 	if(user != O)
-		for(var/mob/B in viewers(user, 3))
-			if((B.client && !( B.blinded )))
-				to_chat(B, text("<span class='warning'>[] stuffs [] into []!</span>", user, O, src))
+		user.visible_message("<span class='warning'>[user] stuffs [O] into [src]!</span>")
 	return
 
 /obj/structure/m_tray/Destroy()
@@ -250,7 +248,7 @@
 	var/cremating = 0
 	var/id = 1
 	var/locked = 0
-	var/open_sound = 'sound/items/Deconstruct.ogg'
+	var/open_sound = 'sound/items/deconstruct.ogg'
 
 /obj/structure/crematorium/proc/update()
 	if(connected)
@@ -440,9 +438,7 @@
 		return
 	O.forceMove(loc)
 	if(user != O)
-		for(var/mob/B in viewers(user, 3))
-			if((B.client && !( B.blinded )))
-				to_chat(B, text("<span class='warning'>[] stuffs [] into []!</span>", user, O, src))
+		user.visible_message("<span class='warning'>[user] stuffs [O] into [src]!</span>")
 			//Foreach goto(99)
 	return
 

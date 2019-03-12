@@ -23,6 +23,7 @@ LIGHTERS ARE IN LIGHTERS.DM
 	w_class = WEIGHT_CLASS_TINY
 	body_parts_covered = null
 	attack_verb = null
+	container_type = INJECTABLE
 	var/lit = FALSE
 	var/icon_on = "cigon"  //Note - these are in masks.dmi not in cigarette.dmi
 	var/icon_off = "cigoff"
@@ -50,11 +51,11 @@ LIGHTERS ARE IN LIGHTERS.DM
 	processing_objects -= src
 	return ..()
 
-/obj/item/clothing/mask/cigarette/attack(var/mob/living/M, var/mob/living/user, def_zone)
+/obj/item/clothing/mask/cigarette/attack(mob/living/M, mob/living/user, def_zone)
 	if(istype(M) && M.on_fire)
 		user.changeNext_move(CLICK_CD_MELEE)
 		user.do_attack_animation(M)
-		light("<span class='notice'>[user] coldly lights the [name] with the burning body of [M]. Clearly, they offer the warmest of regards...</span>")
+		light("<span class='notice'>[user] coldly lights the [name] with the burning body of [M]. Clearly, [user.p_they()] offer[user.p_s()] the warmest of regards...</span>")
 		return 1
 	else
 		return ..()
@@ -73,31 +74,31 @@ LIGHTERS ARE IN LIGHTERS.DM
 	else if(istype(W, /obj/item/lighter/zippo))
 		var/obj/item/lighter/zippo/Z = W
 		if(Z.lit)
-			light("<span class='rose'>With a single flick of their wrist, [user] smoothly lights their [name] with their [W]. Damn they're cool.</span>")
+			light("<span class='rose'>With a single flick of [user.p_their()] wrist, [user] smoothly lights [user.p_their()] [name] with [user.p_their()] [W]. Damn [user.p_theyre()] cool.</span>")
 
 	else if(istype(W, /obj/item/lighter))
 		var/obj/item/lighter/L = W
 		if(L.lit)
-			light("<span class='notice'>After some fiddling, [user] manages to light their [name] with [W].</span>")
+			light("<span class='notice'>After some fiddling, [user] manages to light [user.p_their()] [name] with [W].</span>")
 
 	else if(istype(W, /obj/item/match))
 		var/obj/item/match/M = W
 		if(M.lit == 1)
-			light("<span class='notice'>[user] lights their [name] with their [W].</span>")
+			light("<span class='notice'>[user] lights [user.p_their()] [name] with [user.p_their()] [W].</span>")
 
 	else if(istype(W, /obj/item/melee/energy/sword/saber))
 		var/obj/item/melee/energy/sword/saber/S = W
 		if(S.active)
-			light("<span class='warning'>[user] swings their [W], barely missing their nose. They light their [name] in the process.</span>")
+			light("<span class='warning'>[user] makes a violent slashing motion, barely missing [user.p_their()] nose as light flashes. [user.p_they(TRUE)] light[user.p_s()] [user.p_their()] [name] with [W] in the process.</span>")
 
 	else if(istype(W, /obj/item/assembly/igniter))
-		light("<span class='notice'>[user] fiddles with [W], and manages to light their [name].</span>")
+		light("<span class='notice'>[user] fiddles with [W], and manages to light [user.p_their()] [name].</span>")
 
 	else if(istype(W, /obj/item/gun/magic/wand/fireball))
 		var/obj/item/gun/magic/wand/fireball/F = W
 		if(F.charges)
 			if(prob(50) || user.mind.assigned_role == "Wizard")
-				light("<span class='notice'>Holy shit, did [user] just manage to light their [name] with [W], with only moderate eyebrow singing?</span>")
+				light("<span class='notice'>Holy shit, did [user] just manage to light [user.p_their()] [name] with [W], with only moderate eyebrow singing?</span>")
 			else
 				to_chat(user, "<span class='warning'>Unsure which end of the wand is which, [user] fails to light [name] with [W].</span>")
 				explosion(user.loc, -1, 0, 2, 3, 0, flame_range = 2)
@@ -194,7 +195,8 @@ LIGHTERS ARE IN LIGHTERS.DM
 	if(reagents && reagents.total_volume)	//	check if it has any reagents at all
 		if(is_being_smoked) // if it's being smoked, transfer reagents to the mob
 			var/mob/living/carbon/C = loc
-			reagents.trans_to(C, REAGENTS_METABOLISM)
+			for (var/datum/reagent/R in reagents.reagent_list)
+				reagents.trans_id_to(C, R.id, max(REAGENTS_METABOLISM / reagents.reagent_list.len, 0.1)) //transfer at least .1 of each chem
 			if(!reagents.total_volume) // There were reagents, but now they're gone
 				to_chat(C, "<span class='notice'>Your [name] loses its flavor.</span>")
 		else // else just remove some of the reagents
@@ -230,8 +232,8 @@ LIGHTERS ARE IN LIGHTERS.DM
 	type_butt = /obj/item/cigbutt/roach
 	throw_speed = 0.5
 	item_state = "spliffoff"
-	smoketime = 180
-	chem_volume = 50
+	smoketime = 250
+	chem_volume = 100
 
 /obj/item/clothing/mask/cigarette/rollie/New()
 	..()
@@ -305,6 +307,8 @@ LIGHTERS ARE IN LIGHTERS.DM
 
 
 /obj/item/clothing/mask/cigarette/cigar/attackby(obj/item/W as obj, mob/user as mob, params)
+	if(istype(W, /obj/item/reagent_containers))
+		return
 	if(istype(W, /obj/item/match))
 		..()
 	else
@@ -370,6 +374,8 @@ LIGHTERS ARE IN LIGHTERS.DM
 	return
 
 /obj/item/clothing/mask/cigarette/pipe/attackby(obj/item/W as obj, mob/user as mob, params)
+	if(istype(W, /obj/item/reagent_containers))
+		return
 	if(istype(W, /obj/item/match))
 		..()
 	else

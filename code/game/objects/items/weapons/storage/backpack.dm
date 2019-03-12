@@ -26,6 +26,23 @@
 	playsound(src.loc, "rustle", 50, 1, -5)
 	return ..()
 
+/obj/item/storage/backpack/examine(mob/user)
+	var/space_used = 0
+	if(!..(user, 1))
+		return
+	for(var/obj/item/I in contents)
+		space_used += I.w_class
+	if(!space_used)
+		to_chat(user, "<span class='notice'> [src] is empty.</span>")
+	else if(space_used <= max_combined_w_class*0.6)
+		to_chat(user, "<span class='notice'> [src] still has plenty of remaining space.</span>")
+	else if(space_used <= max_combined_w_class*0.8)
+		to_chat(user, "<span class='notice'> [src] is beginning to run out of space.</span>")
+	else if(space_used < max_combined_w_class)
+		to_chat(user, "<span class='notice'> [src] doesn't have much space left.</span>")
+	else
+		to_chat(user, "<span class='notice'> [src] is full.</span>")
+
 /*
  * Backpack Types
  */
@@ -47,12 +64,12 @@
 
 /obj/item/storage/backpack/holding/attackby(obj/item/W, mob/user, params)
 	if(istype(W, /obj/item/storage/backpack/holding))
-		var/response = alert(user, "Are you sure you want to put the bag of holding inside another bag of holding?","Are you sure you want to die?","Yes","No")
+		var/response = alert(user, "This creates a singularity, destroying you and much of the station. Are you SURE?","IMMINENT DEATH!", "No", "Yes")
 		if(response == "Yes")
-			user.visible_message("<span class='warning'>[user] grins as \he begins to put a Bag of Holding into a Bag of Holding!</span>", "<span class='warning'>You begin to put the Bag of Holding into the Bag of Holding!</span>")
+			user.visible_message("<span class='warning'>[user] grins as [user.p_they()] begin[user.p_s()] to put a Bag of Holding into a Bag of Holding!</span>", "<span class='warning'>You begin to put the Bag of Holding into the Bag of Holding!</span>")
 			if(do_after(user, 30, target=src))
 				investigate_log("has become a singularity. Caused by [user.key]","singulo")
-				user.visible_message("<span class='warning'>[user] erupts in evil laughter as \he puts the Bag of Holding into another Bag of Holding!</span>", "<span class='warning'>You can't help but laugh wildly as you put the Bag of Holding into another Bag of Holding, complete darkness surrounding you.</span>","<span class='warning'> You hear the sound of scientific evil brewing! </span>")
+				user.visible_message("<span class='warning'>[user] erupts in evil laughter as [user.p_they()] put[user.p_s()] the Bag of Holding into another Bag of Holding!</span>", "<span class='warning'>You can't help but laugh wildly as you put the Bag of Holding into another Bag of Holding, complete darkness surrounding you.</span>","<span class='warning'> You hear the sound of scientific evil brewing! </span>")
 				qdel(W)
 				var/obj/singularity/singulo = new /obj/singularity(get_turf(user))
 				singulo.energy = 300 //To give it a small boost
@@ -88,6 +105,25 @@
 	desc = "It's a backpack made by Honk! Co."
 	icon_state = "clownpack"
 	item_state = "clownpack"
+
+/obj/item/storage/backpack/clown/syndie
+
+/obj/item/storage/backpack/clown/syndie/New()
+	..()
+	new /obj/item/clothing/under/rank/clown(src)
+	new /obj/item/clothing/shoes/magboots/clown(src)
+	new /obj/item/clothing/mask/gas/voice/clown(src)
+	new /obj/item/radio/headset/headset_service(src)
+	new /obj/item/pda/clown(src)
+	new /obj/item/storage/box/survival(src)
+	new /obj/item/reagent_containers/food/snacks/grown/banana(src)
+	new /obj/item/stamp/clown(src)
+	new /obj/item/toy/crayon/rainbow(src)
+	new /obj/item/storage/fancy/crayons(src)
+	new /obj/item/reagent_containers/spray/waterflower(src)
+	new /obj/item/reagent_containers/food/drinks/bottle/bottleofbanana(src)
+	new /obj/item/instrument/bikehorn(src)
+	new /obj/item/bikehorn(src)
 
 /obj/item/storage/backpack/mime
 	name = "Parcel Parceaux"
@@ -161,16 +197,31 @@
 	desc = "It's a very fancy satchel made with fine leather."
 	icon_state = "satchel"
 	burn_state = FIRE_PROOF
+	var/strap_side_straight = FALSE
+
+/obj/item/storage/backpack/satchel/verb/switch_strap()
+	set name = "Switch Strap Side"
+	set category = "Object"
+	set src in usr
+
+	if(usr.incapacitated())
+		return
+	strap_side_straight = !strap_side_straight
+	icon_state = strap_side_straight ? "satchel-flipped" : "satchel"
+	if(ishuman(loc))
+		var/mob/living/carbon/human/H = loc
+		H.update_inv_back()
+
+
 
 /obj/item/storage/backpack/satcheldeluxe
 	name = "leather satchel"
 	desc = "An NT Deluxe satchel, with the finest quality leather and the company logo in a thin gold stitch"
 	icon_state = "nt_deluxe"
 
-/obj/item/storage/backpack/satchel/withwallet
-	New()
-		..()
-		new /obj/item/storage/wallet/random( src )
+/obj/item/storage/backpack/satchel/withwallet/New()
+	..()
+	new /obj/item/storage/wallet/random(src)
 
 /obj/item/storage/backpack/satchel_norm
 	name = "satchel"

@@ -7,7 +7,7 @@
 	layer = 2.9
 	density = 1
 	anchored = 1
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 5
 	active_power_usage = 100
 	var/max_n_of_items = 1500
@@ -80,9 +80,11 @@
 	icon_on = "smartfridge_chem"
 
 /obj/machinery/smartfridge/medbay/accept_check(obj/item/O)
-	if(istype(O,/obj/item/reagent_containers/glass/))
+	if(istype(O,/obj/item/reagent_containers/glass))
 		return 1
-	if(istype(O,/obj/item/storage/pill_bottle/))
+	if(istype(O,/obj/item/reagent_containers/iv_bag))
+		return 1
+	if(istype(O,/obj/item/storage/pill_bottle))
 		return 1
 	if(ispill(O))
 		return 1
@@ -106,9 +108,11 @@
 	req_one_access_txt = "5;33"
 
 /obj/machinery/smartfridge/secure/medbay/accept_check(obj/item/O)
-	if(istype(O,/obj/item/reagent_containers/glass/))
+	if(istype(O,/obj/item/reagent_containers/glass))
 		return 1
-	if(istype(O,/obj/item/storage/pill_bottle/))
+	if(istype(O,/obj/item/reagent_containers/iv_bag))
+		return 1
+	if(istype(O,/obj/item/storage/pill_bottle))
 		return 1
 	if(ispill(O))
 		return 1
@@ -226,7 +230,6 @@
 
 	if(load(O, user))
 		user.visible_message("<span class='notice'>[user] has added \the [O] to \the [src].</span>", "<span class='notice'>You add \the [O] to \the [src].</span>")
-
 		SSnanoui.update_uis(src)
 
 	else if(istype(O, /obj/item/storage/bag))
@@ -242,7 +245,7 @@
 
 		SSnanoui.update_uis(src)
 
-	else
+	else if(!istype(O, /obj/item/card/emag))
 		to_chat(user, "<span class='notice'>\The [src] smartly refuses [O].</span>")
 		return 1
 
@@ -307,11 +310,6 @@
 	if(P.contents.len > 0)
 		to_chat(user, "<span class='notice'>Some items are refused.</span>")
 	SSnanoui.update_uis(src)
-
-/obj/machinery/smartfridge/secure/emag_act(mob/user)
-	emagged = 1
-	locked = -1
-	to_chat(user, "You short out the product lock on [src].")
 
 /*******************
 *   SmartFridge Menu
@@ -416,7 +414,7 @@
 	desc = "A wooden contraption, used to dry plant products, food and leather."
 	icon = 'icons/obj/hydroponics/equipment.dmi'
 	icon_state = "drying_rack_on"
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 5
 	active_power_usage = 200
 	icon_on = "drying_rack_on"
@@ -453,13 +451,13 @@
 		return 1
 	if(href_list["dryingOn"])
 		drying = TRUE
-		use_power = 2
+		use_power = ACTIVE_POWER_USE
 		update_icon()
 		return 1
 
 	if(href_list["dryingOff"])
 		drying = FALSE
-		use_power = 1
+		use_power = IDLE_POWER_USE
 		update_icon()
 		return 1
 	return 0
@@ -503,10 +501,10 @@
 /obj/machinery/smartfridge/drying_rack/proc/toggle_drying(forceoff)
 	if(drying || forceoff)
 		drying = FALSE
-		use_power = 1
+		use_power = IDLE_POWER_USE
 	else
 		drying = TRUE
-		use_power = 2
+		use_power = ACTIVE_POWER_USE
 	update_icon()
 
 /obj/machinery/smartfridge/drying_rack/proc/rack_dry()
@@ -539,6 +537,16 @@
 /************************
 *   Secure SmartFridges
 *************************/
+/obj/machinery/smartfridge/secure/emag_act(mob/user)
+	emagged = 1
+	locked = -1
+	to_chat(user, "You short out the product lock on [src].")
+
+/obj/machinery/smartfridge/secure/emp_act(severity)
+	if(prob(40/severity) && (!emagged) && (locked != -1))
+		playsound(loc, 'sound/effects/sparks4.ogg', 60, 1)
+		emagged = 1
+		locked = -1
 
 /obj/machinery/smartfridge/secure/Topic(href, href_list)
 	if(stat & (NOPOWER|BROKEN))

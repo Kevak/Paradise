@@ -1,4 +1,4 @@
-/var/list/sacrificed = list()
+var/list/sacrificed = list()
 var/list/non_revealed_runes = (subtypesof(/obj/effect/rune) - /obj/effect/rune/malformed)
 
 /*
@@ -46,7 +46,7 @@ To draw a rune, use an arcane tome.
 	check_icon()
 	var/image/blood = image(loc = src)
 	blood.override = 1
-	for(var/mob/living/silicon/ai/AI in player_list)
+	for(var/mob/living/silicon/ai/AI in GLOB.player_list)
 		AI.client.images += blood
 
 /obj/effect/rune/examine(mob/user)
@@ -153,7 +153,10 @@ structure_check() searches for nearby cultist structures required for the invoca
 	for(var/M in invokers)
 		var/mob/living/L = M
 		if(invocation)
-			L.say(invocation)
+			if(!L.IsVocal())
+				L.emote("gestures ominously.")
+			else
+				L.say(invocation)
 			L.changeNext_move(CLICK_CD_MELEE)//THIS IS WHY WE CAN'T HAVE NICE THINGS
 		if(invoke_damage)
 			L.apply_damage(invoke_damage, BRUTE)
@@ -350,7 +353,7 @@ var/list/teleport_runes = list()
 	var/turf/T = get_turf(src)
 
 	for(var/mob/living/M in T.contents)
-		if(!iscultist(M) && !ismindshielded(M) && ishuman(M))
+		if(!iscultist(M) && !ismindshielded(M) && !isgolem(M) && ishuman(M))
 			convertees.Add(M)
 	if(!convertees.len)
 		fail_invoke()
@@ -468,10 +471,9 @@ var/list/teleport_runes = list()
 			playsound(T, 'sound/effects/EMPulse.ogg', 100, 1)
 			T.dust() //To prevent the MMI from remaining
 		else
-			playsound(T, 'sound/magic/Disintegrate.ogg', 100, 1)
+			playsound(T, 'sound/magic/disintegrate.ogg', 100, 1)
 			T.gib()
 	rune_in_use = 0
-
 
 
 //Ritual of Dimensional Rending: Calls forth the avatar of Nar-Sie upon the station.
@@ -485,7 +487,7 @@ var/list/teleport_runes = list()
 	icon_state = "rune_large"
 	pixel_x = -32 //So the big ol' 96x96 sprite shows up right
 	pixel_y = -32
-	mouse_opacity = 1 //we're huge and easy to click
+	mouse_opacity = MOUSE_OPACITY_ICON //we're huge and easy to click
 	scribe_delay = 450 //how long the rune takes to create
 	scribe_damage = 40.1 //how much damage you take doing it
 	var/used
@@ -624,8 +626,8 @@ var/list/teleport_runes = list()
 	new /mob/living/simple_animal/slaughter/cult(T, pick(NORTH, EAST, SOUTH, WEST))
 	new /mob/living/simple_animal/slaughter/cult(T, pick(NORTHEAST, SOUTHEAST, NORTHWEST, SOUTHWEST))
 	cult_mode.demons_summoned = 1
-	shuttle_master.emergency.request(null, 0.5,null)
-	shuttle_master.emergency.canRecall = FALSE
+	SSshuttle.emergency.request(null, 0.5,null)
+	SSshuttle.emergency.canRecall = FALSE
 	cult_mode.third_phase()
 	qdel(src)
 
@@ -700,7 +702,7 @@ var/list/teleport_runes = list()
 		return
 	mob_to_revive.revive() //This does remove disabilities and such, but the rune might actually see some use because of it!
 	to_chat(mob_to_revive, "<span class='cultlarge'>\"PASNAR SAVRAE YAM'TOTH. Arise.\"</span>")
-	mob_to_revive.visible_message("<span class='warning'>[mob_to_revive] draws in a huge breath, red light shining from their eyes.</span>", \
+	mob_to_revive.visible_message("<span class='warning'>[mob_to_revive] draws in a huge breath, red light shining from [mob_to_revive.p_their()] eyes.</span>", \
 								  "<span class='cultlarge'>You awaken suddenly from the void. You're alive!</span>")
 	rune_in_use = 0
 
@@ -726,7 +728,7 @@ var/list/teleport_runes = list()
 	visible_message("<span class='warning'>[src] glows blue for a moment before vanishing.</span>")
 	switch(invokers.len)
 		if(1 to 2)
-			playsound(E, 'sound/items/Welder2.ogg', 25, 1)
+			playsound(E, 'sound/items/welder2.ogg', 25, 1)
 			for(var/M in invokers)
 				to_chat(M, "<span class='warning'>You feel a minute vibration pass through you...</span>")
 		if(3 to 6)
@@ -737,10 +739,10 @@ var/list/teleport_runes = list()
 			playsound(E, 'sound/effects/EMPulse.ogg', 100, 1)
 			for(var/M in invokers)
 				var/mob/living/L = M
-				to_chat(L, "<span class=userdanger'>You chant in unison and a colossal burst of energy knocks you backward!</span>")
+				to_chat(L, "<span class='userdanger'>You chant in unison and a colossal burst of energy knocks you backward!</span>")
 				L.Weaken(2)
 	qdel(src) //delete before pulsing because it's a delay reee
-	empulse(E, 9*invokers.len, 12*invokers.len) // Scales now, from a single room to most of the station depending on # of chanters
+	empulse(E, 9*invokers.len, 12*invokers.len, 1) // Scales now, from a single room to most of the station depending on # of chanters
 
 //Rite of Astral Communion: Separates one's spirit from their body. They will take damage while it is active.
 /obj/effect/rune/astral
@@ -787,11 +789,11 @@ var/list/teleport_runes = list()
 			return
 		affecting.apply_damage(1, BRUTE)
 		if(!(user in T.contents))
-			user.visible_message("<span class='warning'>A spectral tendril wraps around [user] and pulls them back to the rune!</span>")
+			user.visible_message("<span class='warning'>A spectral tendril wraps around [user] and pulls [user.p_them()] back to the rune!</span>")
 			Beam(user,icon_state="drainbeam",time=2)
 			user.forceMove(get_turf(src)) //NO ESCAPE :^)
 		if(user.key)
-			user.visible_message("<span class='warning'>[user] slowly relaxes, the glow around them dimming.</span>", \
+			user.visible_message("<span class='warning'>[user] slowly relaxes, the glow around [user.p_them()] dimming.</span>", \
 								 "<span class='danger'>You are re-united with your physical form. [src] releases its hold over you.</span>")
 			user.color = initial(user.color)
 			user.Weaken(3)
@@ -833,7 +835,7 @@ var/list/teleport_runes = list()
 	var/mob/living/user = invokers[1]
 	..()
 	density = !density
-	user.visible_message("<span class='warning'>[user] places their hands on [src], and [density ? "the air above it begins to shimmer" : "the shimmer above it fades"].</span>", \
+	user.visible_message("<span class='warning'>[user] places [user.p_their()] hands on [src], and [density ? "the air above it begins to shimmer" : "the shimmer above it fades"].</span>", \
 						 "<span class='cultitalic'>You channel your life energy into [src], [density ? "preventing" : "allowing"] passage above it.</span>")
 	if(iscarbon(user))
 		var/mob/living/carbon/C = user
@@ -875,7 +877,7 @@ var/list/teleport_runes = list()
 		fail_invoke()
 		log_game("Summon Cultist rune failed - target in away mission")
 		return
-	if((cultist_to_summon.reagents.has_reagent("holywater") || cultist_to_summon.restrained()) && invokers < 3)
+	if((cultist_to_summon.reagents.has_reagent("holywater") || cultist_to_summon.restrained()) && invokers.len < 3)
 		to_chat(user, "<span class='cultitalic'>The summoning of [cultist_to_summon] is being blocked somehow! You need 3 chanters to counter it!</span>")
 		fail_invoke()
 		new /obj/effect/temp_visual/cult/sparks(get_turf(cultist_to_summon)) //observer warning
@@ -977,7 +979,7 @@ var/list/teleport_runes = list()
 	..()
 	cultist_desc = "manifests a spirit as a servant of [ticker.cultdat.entity_title3]. The invoker must not move from atop the rune, and will take damage for each summoned spirit."
 
-	notify_ghosts("Manifest rune created in [get_area(src)].", 'sound/effects/ghost2.ogg', source = src)
+	notify_ghosts("Manifest rune created in [get_area(src)].", ghost_sound='sound/effects/ghost2.ogg', source = src)
 
 /obj/effect/rune/manifest/can_invoke(mob/living/user)
 	if(ghosts >= ghost_limit)
@@ -1029,7 +1031,7 @@ var/list/teleport_runes = list()
 	N.desc = "A weak shield summoned by cultists to protect them while they carry out delicate rituals"
 	N.color = "red"
 	N.health = 20
-	N.mouse_opacity = 0
+	N.mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 	new_human.key = ghost_to_spawn.key
 	ticker.mode.add_cultist(new_human.mind, 0)
 	summoned_guys |= new_human

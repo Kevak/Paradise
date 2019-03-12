@@ -12,7 +12,7 @@
 	var/active = 0
 	settagwhitelist = list("id_tag", "logic_id_tag")
 	anchored = 1.0
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 2
 	active_power_usage = 4
 	var/range = 7
@@ -36,7 +36,7 @@
 	if(radio_controller)
 		set_frequency(frequency)
 
-/obj/machinery/driver_button/initialize()
+/obj/machinery/driver_button/Initialize()
 	..()
 	set_frequency(frequency)
 
@@ -162,7 +162,7 @@
 	var/id = null
 	var/active = 0
 	anchored = 1.0
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 2
 	active_power_usage = 4
 

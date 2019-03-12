@@ -334,7 +334,7 @@
 
 /datum/chemical_reaction/slimeoverload/on_reaction(datum/reagents/holder, created_volume)
 	feedback_add_details("slime_cores_used","[type]")
-	empulse(get_turf(holder.my_atom), 3, 7)
+	empulse(get_turf(holder.my_atom), 3, 7, 1)
 
 
 /datum/chemical_reaction/slimecell
@@ -531,9 +531,7 @@
 
 /datum/chemical_reaction/slimegolem/on_reaction(datum/reagents/holder)
 	feedback_add_details("slime_cores_used","[type]")
-	var/obj/effect/golemrune/Z = new /obj/effect/golemrune
-	Z.forceMove(get_turf(holder.my_atom))
-	notify_ghosts("Golem rune created in [get_area(Z)].", source = Z)
+	new /obj/item/stack/sheet/mineral/adamantine(get_turf(holder.my_atom))
 
 //Bluespace
 /datum/chemical_reaction/slimefloor2
@@ -564,7 +562,7 @@
 /datum/chemical_reaction/slimecrystal/on_reaction(datum/reagents/holder, created_volume)
 	feedback_add_details("slime_cores_used","[type]")
 	if(holder.my_atom)
-		var/obj/item/ore/bluespace_crystal/BC = new(get_turf(holder.my_atom))
+		var/obj/item/stack/ore/bluespace_crystal/BC = new(get_turf(holder.my_atom))
 		BC.visible_message("<span class='notice'>The [BC.name] appears out of thin air!</span>")
 
 //Cerulean

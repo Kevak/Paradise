@@ -115,8 +115,8 @@
 		if(!open)
 			return
 		var/obj/item/reagent_containers/RG = I
-		if(RG.is_open_container())
-			if(RG.reagents.total_volume >= RG.volume)
+		if(RG.is_refillable())
+			if(RG.reagents.holder_full())
 				to_chat(user, "<span class='warning'>[RG] is full.</span>")
 			else
 				RG.reagents.add_reagent("toiletwater", min(RG.volume - RG.reagents.total_volume, RG.amount_per_transfer_from_this))
@@ -243,15 +243,17 @@
 	icon_state = "shower"
 	density = 0
 	anchored = 1
-	use_power = 0
+	use_power = NO_POWER_USE
 	var/on = 0
 	var/obj/effect/mist/mymist = null
 	var/ismist = 0				//needs a var so we can make it linger~
 	var/watertemp = "normal"	//freezing, normal, or boiling
 	var/mobpresent = 0		//true if there is a mob on the shower's loc, this is to ease process()
+	var/datum/looping_sound/showering/soundloop
 
 /obj/machinery/shower/New(turf/T, newdir = SOUTH, building = FALSE)
 	..()
+	soundloop = new(list(src), FALSE)
 	if(building)
 		dir = newdir
 		pixel_x = 0
@@ -264,8 +266,8 @@
 				layer = FLY_LAYER
 
 /obj/machinery/shower/Destroy()
-	if(mymist)
-		QDEL_NULL(mymist)
+	QDEL_NULL(mymist)
+	QDEL_NULL(soundloop)
 	return ..()
 
 //add heat controls? when emagged, you can freeze to death in it?
@@ -276,12 +278,13 @@
 	icon_state = "mist"
 	layer = MOB_LAYER + 1
 	anchored = 1
-	mouse_opacity = 0
+	mouse_opacity = MOUSE_OPACITY_TRANSPARENT
 
 /obj/machinery/shower/attack_hand(mob/M as mob)
 	on = !on
 	update_icon()
 	if(on)
+		soundloop.start()
 		if(M.loc == loc)
 			wash(M)
 			check_heat(M)
@@ -289,6 +292,8 @@
 		for(var/atom/movable/G in src.loc)
 			G.clean_blood()
 			G.water_act(100, convertHeat(), src)
+	else
+		soundloop.stop()
 
 /obj/machinery/shower/attackby(obj/item/I as obj, mob/user as mob, params)
 	if(I.type == /obj/item/analyzer)
@@ -338,9 +343,9 @@
 			mist_time = 70		//7 seconds on freezing temperature to disperse existing mist
 		if(watertemp == "boiling")
 			mist_time = 20		//2 seconds on boiling temperature to build up mist
-		addtimer(src, "update_mist", mist_time)
+		addtimer(CALLBACK(src, .proc/update_mist), mist_time)
 	else
-		addtimer(src, "update_mist", 250)	//25 seconds for mist to disperse after being turned off
+		addtimer(CALLBACK(src, .proc/update_mist), 250) //25 seconds for mist to disperse after being turned off
 
 /obj/machinery/shower/proc/update_mist()
 	if(on)
@@ -502,10 +507,8 @@
 	icon = 'icons/obj/watercloset.dmi'
 	icon_state = "rubberducky"
 	item_state = "rubberducky"
+	honk_sounds = list('sound/items/squeaktoy.ogg' = 1)
 	attack_verb = list("quacked", "squeaked")
-	honk_sound = 'sound/items/squeaktoy.ogg' //credit to DANMITCH3LL of freesound for this
-
-
 
 /obj/structure/sink
 	name = "sink"
@@ -543,7 +546,7 @@
 	var/washing_face = 0
 	if(selected_area in list("head", "mouth", "eyes"))
 		washing_face = 1
-	user.visible_message("<span class='notice'>[user] starts washing their [washing_face ? "face" : "hands"]...</span>", \
+	user.visible_message("<span class='notice'>[user] starts washing [user.p_their()] [washing_face ? "face" : "hands"]...</span>", \
 						"<span class='notice'>You start washing your [washing_face ? "face" : "hands"]...</span>")
 	busy = 1
 
@@ -553,7 +556,7 @@
 
 	busy = 0
 
-	user.visible_message("<span class='notice'>[user] washes their [washing_face ? "face" : "hands"] using [src].</span>", \
+	user.visible_message("<span class='notice'>[user] washes [user.p_their()] [washing_face ? "face" : "hands"] using [src].</span>", \
 						"<span class='notice'>You wash your [washing_face ? "face" : "hands"] using [src].</span>")
 	if(washing_face)
 		if(ishuman(user))
@@ -751,4 +754,3 @@
 		qdel(src)
 		if(prob(50))
 			new /obj/item/stack/sheet/cardboard(T)
-

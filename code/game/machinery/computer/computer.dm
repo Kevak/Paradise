@@ -4,7 +4,7 @@
 	icon_state = "computer"
 	density = 1
 	anchored = 1.0
-	use_power = 1
+	use_power = IDLE_POWER_USE
 	idle_power_usage = 300
 	active_power_usage = 300
 	var/obj/item/circuitboard/circuit = null //if circuit==null, computer can't disassembly
@@ -19,7 +19,7 @@
 	overlay_layer = layer
 	..()
 
-/obj/machinery/computer/initialize()
+/obj/machinery/computer/Initialize()
 	..()
 	power_change()
 	update_icon()
@@ -35,25 +35,24 @@
 
 
 /obj/machinery/computer/ex_act(severity)
-	switch(severity)
-		if(1.0)
-			qdel(src)
-			return
-		if(2.0)
-			if(prob(25))
+	if(!(resistance_flags & INDESTRUCTIBLE))
+		switch(severity)
+			if(1.0)
 				qdel(src)
 				return
-			if(prob(50))
-				for(var/x in verbs)
-					verbs -= x
-				set_broken()
-		if(3.0)
-			if(prob(25))
-				for(var/x in verbs)
-					verbs -= x
-				set_broken()
-		else
-	return
+			if(2.0)
+				if(prob(25))
+					qdel(src)
+					return
+				if(prob(50))
+					for(var/x in verbs)
+						verbs -= x
+					set_broken()
+			if(3.0)
+				if(prob(25))
+					for(var/x in verbs)
+						verbs -= x
+					set_broken()
 
 /obj/machinery/computer/bullet_act(var/obj/item/projectile/Proj)
 	if(prob(Proj.damage))
@@ -67,6 +66,10 @@
 			verbs -= x
 		set_broken()
 		density = 0
+
+/obj/machinery/computer/extinguish_light()
+	set_light(0)
+	visible_message("<span class='danger'>[src] grows dim, its screen barely readable.</span>")
 
 /obj/machinery/computer/update_icon()
 	overlays.Cut()
@@ -93,8 +96,9 @@
 		set_light(light_range_on, light_power_on)
 
 /obj/machinery/computer/proc/set_broken()
-	stat |= BROKEN
-	update_icon()
+	if(!(resistance_flags & INDESTRUCTIBLE))
+		stat |= BROKEN
+		update_icon()
 
 /obj/machinery/computer/proc/decode(text)
 	// Adds line breaks
@@ -110,7 +114,7 @@
 	return ..()
 
 /obj/machinery/computer/attackby(obj/I, mob/user, params)
-	if(istype(I, /obj/item/screwdriver) && circuit)
+	if(istype(I, /obj/item/screwdriver) && circuit && !(resistance_flags & INDESTRUCTIBLE))
 		var/obj/item/screwdriver/S = I
 		playsound(src.loc, S.usesound, 50, 1)
 		if(do_after(user, 20 * S.toolspeed, target = src))

@@ -18,7 +18,8 @@ var/const/SAFETY_COOLDOWN = 100
 	var/item_recycle_sound = 'sound/machines/recycler.ogg'
 
 /obj/machinery/recycler/New()
-	AddComponent(/datum/component/material_container, list(MAT_METAL, MAT_GLASS, MAT_PLASMA, MAT_SILVER, MAT_GOLD, MAT_DIAMOND, MAT_URANIUM, MAT_BANANIUM, MAT_TRANQUILLITE, MAT_TITANIUM, MAT_PLASTIC, MAT_BLUESPACE))
+	AddComponent(/datum/component/material_container, list(MAT_METAL, MAT_GLASS, MAT_PLASMA, MAT_SILVER, MAT_GOLD, MAT_DIAMOND, MAT_URANIUM, MAT_BANANIUM, MAT_TRANQUILLITE, MAT_TITANIUM, MAT_PLASTIC, MAT_BLUESPACE), 0,
+				TRUE, null, null, null, TRUE)
 	..()
 	component_parts = list()
 	component_parts += new /obj/item/circuitboard/recycler(null)
@@ -51,6 +52,7 @@ var/const/SAFETY_COOLDOWN = 100
 
 
 /obj/machinery/recycler/attackby(obj/item/I, mob/user, params)
+	add_fingerprint(user)
 	if(default_deconstruction_screwdriver(user, "grinder-oOpen", "grinder-o0", I))
 		return
 
@@ -60,9 +62,10 @@ var/const/SAFETY_COOLDOWN = 100
 	if(default_unfasten_wrench(user, I))
 		return
 
-	default_deconstruction_crowbar(I)
-	..()
-	add_fingerprint(user)
+	if(default_deconstruction_crowbar(I))
+		return
+	else
+		return ..()
 
 /obj/machinery/recycler/emag_act(mob/user)
 	if(!emagged)
@@ -143,7 +146,7 @@ var/const/SAFETY_COOLDOWN = 100
 	safety_mode = 1
 	update_icon()
 	L.loc = loc
-	addtimer(src, "reboot", SAFETY_COOLDOWN)
+	addtimer(CALLBACK(src, .proc/reboot), SAFETY_COOLDOWN)
 
 /obj/machinery/recycler/proc/reboot()
 	playsound(loc, 'sound/machines/ping.ogg', 50, 0)
@@ -155,7 +158,7 @@ var/const/SAFETY_COOLDOWN = 100
 	L.loc = loc
 
 	if(issilicon(L))
-		playsound(loc, 'sound/items/Welder.ogg', 50, 1)
+		playsound(loc, 'sound/items/welder.ogg', 50, 1)
 	else
 		playsound(loc, 'sound/effects/splat.ogg', 50, 1)
 
@@ -173,7 +176,7 @@ var/const/SAFETY_COOLDOWN = 100
 
 	// Remove and recycle the equipped items
 	if(eat_victim_items)
-		for(var/obj/item/I in L.get_equipped_items())
+		for(var/obj/item/I in L.get_equipped_items(TRUE))
 			if(L.unEquip(I))
 				eat(I, sound = 0)
 

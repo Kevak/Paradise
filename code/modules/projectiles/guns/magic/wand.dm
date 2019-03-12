@@ -38,7 +38,7 @@
 		if(no_den_usage)
 			var/area/A = get_area(user)
 			if(istype(A, /area/wizard_station))
-				to_chat(user, "<span class='warning'>You know better than to violate the security of The Den, best wait until you leave to use [src].<span>")
+				to_chat(user, "<span class='warning'>You know better than to violate the security of The Den, best wait until you leave to use [src].</span>")
 				return
 			else
 				no_den_usage = 0
@@ -48,9 +48,9 @@
 	update_icon()
 
 /obj/item/gun/magic/wand/proc/zap_self(mob/living/user)
-	user.visible_message("<span class='danger'>[user] zaps \himself with [src].</span>")
+	user.visible_message("<span class='danger'>[user] zaps [user.p_them()]self with [src].</span>")
 	playsound(user, fire_sound, 50, 1)
-	user.create_attack_log("<b>[key_name(user)]</b> zapped \himself with a <b>[src]</b>")
+	user.create_attack_log("<b>[key_name(user)]</b> zapped [user.p_them()]self with a <b>[src]</b>")
 
 /////////////////////////////////////
 //WAND OF DEATH
@@ -59,7 +59,7 @@
 /obj/item/gun/magic/wand/death
 	name = "wand of death"
 	desc = "This deadly wand overwhelms the victim's body with pure energy, slaying them without fail."
-	fire_sound = 'sound/magic/WandoDeath.ogg'
+	fire_sound = 'sound/magic/wandodeath.ogg'
 	ammo_type = /obj/item/ammo_casing/magic/death
 	icon_state = "deathwand"
 	max_charges = 3 //3, 2, 2, 1
@@ -80,7 +80,7 @@
 	name = "wand of resurrection"
 	desc = "This wand uses healing magics to heal and revive. They are rarely utilized within the Wizard Federation for some reason."
 	ammo_type = /obj/item/ammo_casing/magic/heal
-	fire_sound = 'sound/magic/Staff_Healing.ogg'
+	fire_sound = 'sound/magic/staff_healing.ogg'
 	icon_state = "revivewand"
 	max_charges = 3 //3, 2, 2, 1
 
@@ -98,7 +98,7 @@
 	name = "wand of polymorph"
 	desc = "This wand is attuned to chaos and will radically alter the victim's form."
 	ammo_type = /obj/item/ammo_casing/magic/change
-	fire_sound = 'sound/magic/Staff_Change.ogg'
+	fire_sound = 'sound/magic/staff_change.ogg'
 	icon_state = "polywand"
 	max_charges = 10 //10, 5, 5, 4
 
@@ -118,7 +118,7 @@
 	icon_state = "telewand"
 	max_charges = 10 //10, 5, 5, 4
 	no_den_usage = 1
-	fire_sound = 'sound/magic/Wand_Teleport.ogg'
+	fire_sound = 'sound/magic/wand_teleport.ogg'
 
 /obj/item/gun/magic/wand/teleport/zap_self(mob/living/user)
 	do_teleport(user, user, 10)
@@ -136,7 +136,7 @@
 	name = "wand of door creation"
 	desc = "This particular wand can create doors in any wall for the unscrupulous wizard who shuns teleportation magics."
 	ammo_type = /obj/item/ammo_casing/magic/door
-	fire_sound = 'sound/magic/Staff_Door.ogg'
+	fire_sound = 'sound/magic/staff_door.ogg'
 	icon_state = "doorwand"
 	max_charges = 20 //20, 10, 10, 7
 
@@ -152,7 +152,7 @@
 /obj/item/gun/magic/wand/fireball
 	name = "wand of fireball"
 	desc = "This wand shoots scorching balls of fire that explode into destructive flames."
-	fire_sound = 'sound/magic/Fireball.ogg'
+	fire_sound = 'sound/magic/fireball.ogg'
 	ammo_type = /obj/item/ammo_casing/magic/fireball
 	icon_state = "firewand"
 	max_charges = 8 //8, 4, 4, 3
